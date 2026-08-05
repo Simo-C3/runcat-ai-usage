@@ -37,6 +37,7 @@ cat >"$EXECUTABLE" <<EOF
 set -eu
 RESOURCES=\$(CDPATH= cd -- "\$(dirname -- "\$0")/../Resources" && pwd)
 export PYTHONPATH="\$RESOURCES"
+export PYTHONDONTWRITEBYTECODE=1
 exec "$PYTHON_BIN" -m runcat_ai_usage "\$@"
 EOF
 chmod 755 "$EXECUTABLE"
