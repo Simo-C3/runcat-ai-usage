@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Validate version tag
+        id: version
+        run: |
+          version=$(python scripts/version.py check-tag "$GITHUB_REF_NAME")
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Test release commit
+        run: |
+          PYTHONPATH=src python -m unittest discover -s tests -v
+          sh -n scripts/install.sh
+          sh -n scripts/uninstall.sh
+          brew style Formula/runcat-ai-usage.rb
+
+      - name: Build source archive
+        id: archive
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          asset="runcat-ai-usage-${VERSION}.tar.gz"
+          path="$RUNNER_TEMP/$asset"
+          git archive \
+            --format=tar.gz \
+            --prefix="runcat-ai-usage-${VERSION}/" \
+            --output="$path" \
+            "$GITHUB_SHA"
+          sha256=$(shasum -a 256 "$path" | awk '{print $1}')
+          tar -tzf "$path" >/dev/null
+          echo "name=$asset" >> "$GITHUB_OUTPUT"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET_PATH: ${{ steps.archive.outputs.path }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ASSET_PATH" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              "$ASSET_PATH" \
+              --verify-tag \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes
+          fi
+
+      - name: Update Homebrew Formula
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+          ASSET: ${{ steps.archive.outputs.name }}
+          SHA256: ${{ steps.archive.outputs.sha256 }}
+        run: |
+          git checkout main
+          git pull --ff-only origin main
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${ASSET}"
+          python scripts/version.py update-formula "$VERSION" "$url" "$SHA256"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/runcat-ai-usage.rb
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(homebrew): ${GITHUB_REF_NAME}へ更新する"
+          fi
+
+      - name: Test released Homebrew Formula
+        run: |
+          brew tap local/release "$GITHUB_WORKSPACE"
+          brew install local/release/runcat-ai-usage
+          brew test local/release/runcat-ai-usage
+
+      - name: Publish Homebrew Formula
+        run: git push origin HEAD:main

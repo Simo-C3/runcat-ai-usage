@@ -1,5 +1,8 @@
 # RunCat AI Usage
 
+[![Test](https://github.com/Simo-C3/runcat-ai-usage/actions/workflows/test.yml/badge.svg)](https://github.com/Simo-C3/runcat-ai-usage/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/Simo-C3/runcat-ai-usage)](https://github.com/Simo-C3/runcat-ai-usage/releases)
+
 [RunCat Neo](https://github.com/runcat-dev/RunCatNeo) に Claude Code、Codex、
 GitHub Copilot のプラン利用状況を表示します。
 
@@ -148,3 +151,6 @@ RunCat Neoに追加したCustom Metrics Sourceは別途削除してください�
 ## ライセンス
 
 [MIT](LICENSE)
+
+リリースはSemVerタグから自動作成します。手順は
+[RELEASING.md](RELEASING.md) を参照してください。

@@ -1,5 +1,8 @@
 # RunCat AI Usage
 
+[![Test](https://github.com/Simo-C3/runcat-ai-usage/actions/workflows/test.yml/badge.svg)](https://github.com/Simo-C3/runcat-ai-usage/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/Simo-C3/runcat-ai-usage)](https://github.com/Simo-C3/runcat-ai-usage/releases)
+
 Display Claude Code, Codex, and GitHub Copilot plan usage in
 [RunCat Neo](https://github.com/runcat-dev/RunCatNeo).
 
@@ -202,6 +205,7 @@ brew style Formula/runcat-ai-usage.rb
 ```
 
 The project intentionally uses only the Python standard library.
+Releases are automated from SemVer tags; see [RELEASING.md](RELEASING.md).
 
 ## License
 

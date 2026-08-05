@@ -25,6 +25,10 @@ if [ ! -x "$PYTHON_BIN" ]; then
     echo "$PYTHON_BIN is required." >&2
     exit 1
 fi
+PACKAGE_VERSION=$(
+    PYTHONPATH="$ROOT/src" "$PYTHON_BIN" -c \
+        "from runcat_ai_usage import __version__; print(__version__)"
+)
 
 mkdir -p "$SUPPORT_ROOT" "$LOG_DIR" "$OUTPUT_DIR" "$HOME/Library/LaunchAgents"
 rm -rf "$STAGING_APP"
@@ -47,14 +51,16 @@ chmod 755 "$EXECUTABLE"
     "$LAUNCH_AGENT" \
     "$APP/Contents/MacOS/$APP_NAME" \
     "$LOG_DIR" \
-    "$OUTPUT_DIR" <<'PY'
+    "$OUTPUT_DIR" \
+    "$PACKAGE_VERSION" <<'PY'
 import plistlib
 import sys
 from pathlib import Path
 
 info_path, agent_path, executable, log_directory, output_directory = map(
-    Path, sys.argv[1:]
+    Path, sys.argv[1:6]
 )
+version = sys.argv[6]
 info = {
     "CFBundleDisplayName": "RunCat AI Usage Monitor",
     "CFBundleExecutable": "RunCat AI Usage Monitor",
@@ -62,8 +68,8 @@ info = {
     "CFBundleInfoDictionaryVersion": "6.0",
     "CFBundleName": "RunCat AI Usage Monitor",
     "CFBundlePackageType": "APPL",
-    "CFBundleShortVersionString": "0.1.0",
-    "CFBundleVersion": "1",
+    "CFBundleShortVersionString": version,
+    "CFBundleVersion": version,
     "LSMinimumSystemVersion": "13.0",
     "LSUIElement": True,
 }
