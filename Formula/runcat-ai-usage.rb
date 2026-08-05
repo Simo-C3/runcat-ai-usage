@@ -4,9 +4,9 @@
 class RuncatAiUsage < Formula
   desc "AI plan usage cards for RunCat Neo"
   homepage "https://github.com/Simo-C3/runcat-ai-usage"
-  url "https://github.com/Simo-C3/runcat-ai-usage/archive/0a4507d4bee348e44cbd8302c423f499677626ed.tar.gz"
+  url "https://github.com/Simo-C3/runcat-ai-usage/releases/download/v0.1.0/runcat-ai-usage-0.1.0.tar.gz"
   version "0.1.0"
-  sha256 "f93c38f51dcf4afd3c1cb7ab734825ba393b40a2571a36b00f691156f5640787"
+  sha256 "1bfd75c04809f9b31c02971d1886037504d48d7687f834ba0e6aa70af9db9b56"
   license "MIT"
 
   depends_on :macos
