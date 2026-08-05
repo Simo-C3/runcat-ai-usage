@@ -19,7 +19,6 @@ Today / 1h: 145 / 12 AIC
 
 - macOS 13以降
 - Custom Metrics対応のRunCat Neo
-- `/usr/bin/python3`
 - 利用したいサービスのログイン済みCLI
   - Claude Code
   - Codex
@@ -28,7 +27,30 @@ Today / 1h: 145 / 12 AIC
 未ログインのサービスは `Unavailable` となり、ほかのカードは通常どおり
 更新されます。
 
-## インストール
+Homebrewでインストールする場合、Pythonも自動で管理されます。手動
+インストールでは `/usr/bin/python3` が別途必要です。
+
+## Homebrewでインストール（推奨）
+
+```sh
+brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
+brew install runcat-ai-usage
+runcat-ai-usage-install
+```
+
+アップデート:
+
+```sh
+brew update
+brew upgrade runcat-ai-usage
+runcat-ai-usage-install
+```
+
+最後のコマンドで、名前付きバックグラウンドアプリのインストールまたは更新、
+1分間隔のLaunchAgentの起動、初回JSON生成、`~/RunCatMetrics` の表示まで
+行います。既存の履歴は維持されます。
+
+## 手動でインストール
 
 ```sh
 git clone https://github.com/Simo-C3/runcat-ai-usage.git
@@ -49,7 +71,8 @@ RunCat Neoの **Settings → Metrics → Custom Metrics** で
 RunCat側で必要な設定はこのファイル選択だけです。必要に応じてMetrics Barで
 各ソースを有効にすると、メニューバーにも現在のRateを表示できます。
 
-更新時は、新しいコードで `./scripts/install.sh` をもう一度実行してください。
+手動インストールの更新時は、新しいコードで `./scripts/install.sh` をもう一度
+実行してください。
 
 ## 表示内容
 
@@ -73,6 +96,12 @@ RunCat側で必要な設定はこのファイル選択だけです。必要に�
 認証情報を表示せずに、3サービスの接続状況を確認できます。
 
 ```sh
+runcat-ai-usage --doctor
+```
+
+手動インストールの場合:
+
+```sh
 "$HOME/Library/Application Support/RunCat AI Usage/RunCat AI Usage Monitor.app/Contents/MacOS/RunCat AI Usage Monitor" --doctor
 ```
 
@@ -88,14 +117,26 @@ tail -n 50 "$HOME/Library/Logs/RunCat AI Usage/monitor.error.log"
 
 ## アンインストール
 
+Homebrew:
+
+```sh
+runcat-ai-usage-uninstall
+brew uninstall runcat-ai-usage
+brew untap Simo-C3/runcat-ai-usage
+```
+
+手動インストール:
+
 ```sh
 ./scripts/uninstall.sh
 ```
 
-履歴とJSONも削除する場合:
+どちらも履歴とJSONは残します。これらも削除する場合は、Formulaを削除する
+前にアンインストールコマンドへ `--purge` を付けます。
 
 ```sh
-./scripts/uninstall.sh --purge
+runcat-ai-usage-uninstall --purge
+# または: ./scripts/uninstall.sh --purge
 ```
 
 RunCat Neoに追加したCustom Metrics Sourceは別途削除してください。

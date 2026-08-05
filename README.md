@@ -25,7 +25,6 @@ and keeps 40 days of local usage history. No Python packages are required.
 
 - macOS 13 or later
 - RunCat Neo with Custom Metrics support
-- `/usr/bin/python3`
 - The provider CLIs you want to monitor:
   - Claude Code, signed in
   - Codex, signed in
@@ -34,7 +33,30 @@ and keeps 40 days of local usage history. No Python packages are required.
 Providers can be used independently. A missing login appears as `Unavailable`
 and does not prevent the other cards from updating.
 
-## Install
+The Homebrew installation manages Python automatically. A manual installation
+additionally requires `/usr/bin/python3`.
+
+## Install with Homebrew (recommended)
+
+```sh
+brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
+brew install runcat-ai-usage
+runcat-ai-usage-install
+```
+
+To upgrade:
+
+```sh
+brew update
+brew upgrade runcat-ai-usage
+runcat-ai-usage-install
+```
+
+The final command installs or updates the named background app, starts its
+one-minute LaunchAgent, generates the initial snapshots, and opens
+`~/RunCatMetrics`. Existing history is preserved.
+
+## Install manually
 
 ```sh
 git clone https://github.com/Simo-C3/runcat-ai-usage.git
@@ -61,7 +83,7 @@ In RunCat Neo, open **Settings → Metrics → Custom Metrics**, select
 This file selection is the only required RunCat GUI setup. Optionally enable
 each source in the Metrics Bar to show its current rate in the menu bar.
 
-Re-run `./scripts/install.sh` to update an existing installation.
+Re-run `./scripts/install.sh` to update a manual installation.
 
 ## What each value means
 
@@ -88,6 +110,12 @@ Provider plans expose different values:
 Check credentials and provider responses without printing secrets:
 
 ```sh
+runcat-ai-usage --doctor
+```
+
+For a manual installation:
+
+```sh
 "$HOME/Library/Application Support/RunCat AI Usage/RunCat AI Usage Monitor.app/Contents/MacOS/RunCat AI Usage Monitor" --doctor
 ```
 
@@ -100,7 +128,7 @@ launchctl kickstart -k "gui/$(id -u)/dev.runcat.ai-usage"
 Use a different snapshot directory during installation:
 
 ```sh
-RUNCAT_AI_USAGE_OUTPUT_DIR="$HOME/MyMetrics" ./scripts/install.sh
+RUNCAT_AI_USAGE_OUTPUT_DIR="$HOME/MyMetrics" runcat-ai-usage-install
 ```
 
 ## Troubleshooting
@@ -125,14 +153,26 @@ launchctl print "gui/$(id -u)/dev.runcat.ai-usage"
 
 ## Uninstall
 
+Homebrew:
+
+```sh
+runcat-ai-usage-uninstall
+brew uninstall runcat-ai-usage
+brew untap Simo-C3/runcat-ai-usage
+```
+
+Manual installation:
+
 ```sh
 ./scripts/uninstall.sh
 ```
 
-This keeps history and snapshots. To remove them as well:
+Both methods keep history and snapshots by default. To remove them as well,
+pass `--purge` to the uninstall command before uninstalling the Formula:
 
 ```sh
-./scripts/uninstall.sh --purge
+runcat-ai-usage-uninstall --purge
+# or: ./scripts/uninstall.sh --purge
 ```
 
 Remove the three Custom Metrics sources from RunCat Neo separately.
@@ -153,6 +193,7 @@ This project is not affiliated with RunCat Neo, Anthropic, OpenAI, or GitHub.
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 sh -n scripts/install.sh
 sh -n scripts/uninstall.sh
+brew style Formula/runcat-ai-usage.rb
 ```
 
 The project intentionally uses only the Python standard library.

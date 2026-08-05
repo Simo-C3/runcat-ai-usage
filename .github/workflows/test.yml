@@ -24,3 +24,14 @@ jobs:
         run: |
           sh -n scripts/install.sh
           sh -n scripts/uninstall.sh
+
+  homebrew:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install and test Formula
+        run: |
+          brew style Formula/runcat-ai-usage.rb
+          brew tap local/runcat-ai-usage "$GITHUB_WORKSPACE"
+          brew install local/runcat-ai-usage/runcat-ai-usage
+          brew test local/runcat-ai-usage/runcat-ai-usage
