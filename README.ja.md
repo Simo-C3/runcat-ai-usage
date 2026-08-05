@@ -34,9 +34,12 @@ Homebrewでインストールする場合、Pythonも自動で管理されます
 
 ```sh
 brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
+brew trust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew install runcat-ai-usage
 runcat-ai-usage-install
 ```
+
+`brew trust` ではtap全体ではなく、このFormulaだけを信頼対象にします。
 
 アップデート:
 
@@ -122,6 +125,7 @@ Homebrew:
 ```sh
 runcat-ai-usage-uninstall
 brew uninstall runcat-ai-usage
+brew untrust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew untap Simo-C3/runcat-ai-usage
 ```
 

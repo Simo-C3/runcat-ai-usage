@@ -40,9 +40,13 @@ additionally requires `/usr/bin/python3`.
 
 ```sh
 brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
+brew trust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew install runcat-ai-usage
 runcat-ai-usage-install
 ```
+
+The `brew trust` command grants trust to this Formula only, not to every
+current or future Formula in the tap.
 
 To upgrade:
 
@@ -158,6 +162,7 @@ Homebrew:
 ```sh
 runcat-ai-usage-uninstall
 brew uninstall runcat-ai-usage
+brew untrust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew untap Simo-C3/runcat-ai-usage
 ```
 
