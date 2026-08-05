@@ -13,6 +13,7 @@ RESOURCES="$CONTENTS/Resources"
 STATE_DIR="$SUPPORT_ROOT/state"
 LOG_DIR="$HOME/Library/Logs/RunCat AI Usage"
 OUTPUT_DIR="${RUNCAT_AI_USAGE_OUTPUT_DIR:-$HOME/RunCatMetrics}"
+PYTHON_BIN="${RUNCAT_AI_USAGE_PYTHON:-/usr/bin/python3}"
 LAUNCH_AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"
 DOMAIN="gui/$(id -u)"
 
@@ -20,8 +21,8 @@ if [ "$(uname -s)" != "Darwin" ]; then
     echo "runcat-ai-usage supports macOS only." >&2
     exit 1
 fi
-if [ ! -x /usr/bin/python3 ]; then
-    echo "/usr/bin/python3 is required." >&2
+if [ ! -x "$PYTHON_BIN" ]; then
+    echo "$PYTHON_BIN is required." >&2
     exit 1
 fi
 
@@ -31,16 +32,16 @@ mkdir -p "$CONTENTS/MacOS" "$RESOURCES"
 cp -R "$ROOT/src/runcat_ai_usage" "$RESOURCES/"
 find "$RESOURCES" -type d -name __pycache__ -prune -exec rm -rf {} \;
 
-cat >"$EXECUTABLE" <<'EOF'
+cat >"$EXECUTABLE" <<EOF
 #!/bin/sh
 set -eu
-RESOURCES=$(CDPATH= cd -- "$(dirname -- "$0")/../Resources" && pwd)
-export PYTHONPATH="$RESOURCES"
-exec /usr/bin/python3 -m runcat_ai_usage "$@"
+RESOURCES=\$(CDPATH= cd -- "\$(dirname -- "\$0")/../Resources" && pwd)
+export PYTHONPATH="\$RESOURCES"
+exec "$PYTHON_BIN" -m runcat_ai_usage "\$@"
 EOF
 chmod 755 "$EXECUTABLE"
 
-/usr/bin/python3 - \
+"$PYTHON_BIN" - \
     "$CONTENTS/Info.plist" \
     "$LAUNCH_AGENT" \
     "$APP/Contents/MacOS/$APP_NAME" \
@@ -104,7 +105,7 @@ if [ ! -f "$STATE_DIR/history.db" ] && [ -f "$OLD_HISTORY" ]; then
     mkdir -p "$STATE_DIR"
     cp "$OLD_HISTORY" "$STATE_DIR/history.db"
 fi
-/usr/bin/python3 - "$STATE_DIR/cache" "$HOME" <<'PY'
+"$PYTHON_BIN" - "$STATE_DIR/cache" "$HOME" <<'PY'
 import json
 import shutil
 import sys
