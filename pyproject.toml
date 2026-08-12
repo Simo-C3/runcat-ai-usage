@@ -18,7 +18,20 @@ classifiers = [
 ]
 
 [project.scripts]
-runcat-ai-usage = "runcat_ai_usage.app:main"
+runcat-ai-usage = "runcat_ai_usage:main"
+
+[tool.setuptools]
+py-modules = [
+    "app",
+    "cache",
+    "history",
+    "models",
+    "output",
+    "runcat_ai_usage",
+    "services",
+    "storage",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["providers"]

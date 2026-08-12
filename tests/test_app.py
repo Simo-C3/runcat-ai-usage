@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from runcat_ai_usage.app import non_negative_int, parser
+from app import non_negative_int, parser
 
 
 class AppTests(unittest.TestCase):

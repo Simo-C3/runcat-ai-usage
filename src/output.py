@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .models import HistoryData, Usage
-from .storage import atomic_write_json
+from models import HistoryData, Usage
+from storage import atomic_write_json
 
 
 def percentage_value(percentage: float) -> str:

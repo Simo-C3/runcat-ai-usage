@@ -2,8 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from runcat_ai_usage.cache import cached_usage
-from runcat_ai_usage.models import Usage
+from cache import cached_usage
+from models import Usage
 
 
 class CacheTests(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 
-from runcat_ai_usage.providers import (
+from providers import (
     ProviderError,
     parse_claude_usage,
     parse_codex_usage,

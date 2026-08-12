@@ -5,11 +5,11 @@ import time
 from pathlib import Path
 from typing import Optional, Sequence
 
-from . import __version__
-from .cache import FETCH_ERRORS, cached_usage
-from .history import HistoryStore
-from .output import rate_value, write_snapshot
-from .services import services
+from cache import FETCH_ERRORS, cached_usage
+from history import HistoryStore
+from output import rate_value, write_snapshot
+from runcat_ai_usage import __version__
+from services import services
 
 
 def run_once(

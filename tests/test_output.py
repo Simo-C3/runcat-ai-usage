@@ -3,8 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from runcat_ai_usage.models import HistoryData, Usage
-from runcat_ai_usage.output import rate_value, snapshot, write_snapshot
+from models import HistoryData, Usage
+from output import rate_value, snapshot, write_snapshot
 
 
 class OutputTests(unittest.TestCase):

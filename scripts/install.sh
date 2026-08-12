@@ -33,7 +33,8 @@ PACKAGE_VERSION=$(
 mkdir -p "$SUPPORT_ROOT" "$LOG_DIR" "$OUTPUT_DIR" "$HOME/Library/LaunchAgents"
 rm -rf "$STAGING_APP"
 mkdir -p "$CONTENTS/MacOS" "$RESOURCES"
-cp -R "$ROOT/src/runcat_ai_usage" "$RESOURCES/"
+cp "$ROOT"/src/*.py "$RESOURCES/"
+cp -R "$ROOT/src/providers" "$RESOURCES/"
 find "$RESOURCES" -type d -name __pycache__ -prune -exec rm -rf {} \;
 
 cat >"$EXECUTABLE" <<EOF

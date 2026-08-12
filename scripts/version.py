@@ -9,7 +9,7 @@ from pathlib import Path
 
 SEMVER_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 ROOT = Path(__file__).resolve().parent.parent
-INIT_PATH = ROOT / "src" / "runcat_ai_usage" / "__init__.py"
+VERSION_PATH = ROOT / "src" / "runcat_ai_usage.py"
 PYPROJECT_PATH = ROOT / "pyproject.toml"
 FORMULA_PATH = ROOT / "Formula" / "runcat-ai-usage.rb"
 
@@ -44,7 +44,7 @@ def capture_one(path: Path, pattern: str) -> str:
 
 def package_versions() -> tuple:
     return (
-        capture_one(INIT_PATH, r'^__version__ = "([^"]+)"$'),
+        capture_one(VERSION_PATH, r'^__version__ = "([^"]+)"$'),
         capture_one(PYPROJECT_PATH, r'^version = "([^"]+)"$'),
     )
 
@@ -67,7 +67,7 @@ def formula_version() -> str:
 def set_package_version(version: str) -> None:
     require_semver(version)
     replace_one(
-        INIT_PATH,
+        VERSION_PATH,
         r'^__version__ = "[^"]+"$',
         '__version__ = "{}"'.format(version),
     )

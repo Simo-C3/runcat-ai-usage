@@ -2,7 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from ..models import Usage, number
+from models import Usage, number
 from .common import HttpGet, JsonObject, ProviderError, fetch_json, object_value
 
 

@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 
-from .models import Usage, number
-from .storage import atomic_write_json, read_object
+from models import Usage, number
+from storage import atomic_write_json, read_object
 
 
 FETCH_ERRORS = (

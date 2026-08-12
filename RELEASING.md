@@ -13,7 +13,7 @@ Start from a clean, up-to-date `main` branch:
 The script:
 
 1. Validates stable SemVer and a clean `main` branch.
-2. Updates `pyproject.toml` and `runcat_ai_usage.__version__`.
+2. Updates `pyproject.toml` and `src/runcat_ai_usage.py`.
 3. Runs the unit tests.
 4. Creates a version commit when needed.
 5. Creates an annotated `v0.2.0` tag and pushes the branch and tag.

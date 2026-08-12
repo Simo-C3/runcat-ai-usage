@@ -65,10 +65,10 @@ PY
     python3 scripts/version.py set "$VERSION"
     python3 scripts/version.py check-tag "$TAG" >/dev/null
     if ! PYTHONPATH=src python3 -m unittest discover -s tests -q; then
-        git restore -- pyproject.toml src/runcat_ai_usage/__init__.py
+        git restore -- pyproject.toml src/runcat_ai_usage.py
         exit 1
     fi
-    git add pyproject.toml src/runcat_ai_usage/__init__.py
+    git add pyproject.toml src/runcat_ai_usage.py
     git commit -m "chore(release): $TAG を準備する"
 else
     python3 scripts/version.py check-tag "$TAG" >/dev/null

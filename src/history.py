@@ -3,7 +3,7 @@ from datetime import date, datetime, time as datetime_time, timedelta
 from pathlib import Path
 from typing import Optional, Sequence
 
-from .models import HistoryData, Usage
+from models import HistoryData, Usage
 
 
 class HistoryStore:

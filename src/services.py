@@ -3,8 +3,8 @@ from functools import partial
 from pathlib import Path
 from typing import Callable, List
 
-from .models import Usage
-from .providers import collect_claude, collect_codex, collect_copilot
+from models import Usage
+from providers import collect_claude, collect_codex, collect_copilot
 
 
 UsageFetcher = Callable[[], Usage]

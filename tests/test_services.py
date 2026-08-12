@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from runcat_ai_usage.services import services
+from services import services
 
 
 class ServiceCatalogTests(unittest.TestCase):

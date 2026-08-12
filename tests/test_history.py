@@ -2,8 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from runcat_ai_usage.history import HistoryStore, positive_delta
-from runcat_ai_usage.models import Usage
+from history import HistoryStore, positive_delta
+from models import Usage
 
 
 class HistoryTests(unittest.TestCase):
