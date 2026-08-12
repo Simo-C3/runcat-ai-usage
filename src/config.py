@@ -1,3 +1,4 @@
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, Tuple
@@ -8,6 +9,28 @@ from storage import atomic_write_json, read_object
 METRIC_ROWS = ("rate", "change", "trend")
 RATE_FORMATS = ("full", "percentage")
 LANGUAGES = ("en", "ja")
+TREND_PERIOD_PRESETS = ("1h", "1d", "1w", "1mo")
+TREND_BUCKETS = 7
+MIN_TREND_PERIOD_SECONDS = TREND_BUCKETS * 60
+MAX_TREND_PERIOD_SECONDS = 365 * 86400
+
+
+def trend_period_seconds(value: str) -> int:
+    match = re.fullmatch(r"([1-9][0-9]*)(mo|m|h|d|w)", value)
+    if match is None:
+        raise ValueError("trend_period must use m, h, d, w, or mo")
+    amount = int(match.group(1))
+    unit = match.group(2)
+    seconds = amount * {
+        "m": 60,
+        "h": 3600,
+        "d": 86400,
+        "w": 7 * 86400,
+        "mo": 30 * 86400,
+    }[unit]
+    if not MIN_TREND_PERIOD_SECONDS <= seconds <= MAX_TREND_PERIOD_SECONDS:
+        raise ValueError("trend_period must be between 7 minutes and 365 days")
+    return seconds
 
 
 @dataclass(frozen=True)
@@ -16,6 +39,7 @@ class DisplayConfig:
     rate_format: str = "full"
     percentage_precision: int = 1
     language: str = "en"
+    trend_period: str = "1w"
 
     def to_dict(self) -> Dict[str, Any]:
         value = asdict(self)
@@ -47,7 +71,10 @@ class DisplayConfig:
         if language not in LANGUAGES:
             raise ValueError("language is unsupported")
 
-        return cls(rows, rate_format, precision, language)
+        trend_period = str(value.get("trend_period", "1w"))
+        trend_period_seconds(trend_period)
+
+        return cls(rows, rate_format, precision, language, trend_period)
 
 
 DEFAULT_DISPLAY_CONFIG = DisplayConfig()

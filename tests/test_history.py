@@ -26,6 +26,20 @@ class HistoryTests(unittest.TestCase):
                 )
                 self.assertEqual(store.period_delta("codex", 600, 660), 12)
 
+    def test_summary_splits_custom_period_into_seven_buckets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.db"
+            with HistoryStore(path) as store:
+                for index in range(8):
+                    store.record(
+                        "codex",
+                        Usage(percentage=10, used_amount=index),
+                        600 + index * 600,
+                    )
+                summary = store.summary("codex", 4800, 4200)
+                self.assertEqual(summary.daily, [1] * 7)
+                self.assertEqual(summary.days_with_samples, [True] * 7)
+
     def test_record_skips_usage_without_absolute_amount(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "history.db"

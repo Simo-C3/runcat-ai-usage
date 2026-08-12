@@ -7,6 +7,7 @@ from config import (
     DisplayConfig,
     load_display_config,
     save_display_config,
+    trend_period_seconds,
 )
 
 
@@ -17,11 +18,21 @@ class DisplayConfigTests(unittest.TestCase):
             rate_format="percentage",
             percentage_precision=2,
             language="ja",
+            trend_period="12h",
         )
         with tempfile.TemporaryDirectory() as directory:
             state_directory = Path(directory)
             save_display_config(state_directory, configured)
             self.assertEqual(load_display_config(state_directory), configured)
+
+    def test_trend_period_supports_presets_and_custom_durations(self):
+        self.assertEqual(trend_period_seconds("1h"), 3600)
+        self.assertEqual(trend_period_seconds("1mo"), 30 * 86400)
+        self.assertEqual(trend_period_seconds("90m"), 5400)
+        with self.assertRaises(ValueError):
+            trend_period_seconds("custom")
+        with self.assertRaises(ValueError):
+            trend_period_seconds("366d")
 
     def test_missing_or_invalid_config_uses_defaults(self):
         with tempfile.TemporaryDirectory() as directory:

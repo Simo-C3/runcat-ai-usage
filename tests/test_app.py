@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from app import main, metric_rows, non_negative_int, parser
+from app import main, metric_rows, non_negative_int, parser, trend_period
 from config import load_display_config
 
 
@@ -32,6 +32,11 @@ class AppTests(unittest.TestCase):
         with self.assertRaises(argparse.ArgumentTypeError):
             metric_rows("rate,rate")
 
+    def test_trend_period_rejects_invalid_custom_duration(self):
+        self.assertEqual(trend_period("14d"), "14d")
+        with self.assertRaises(argparse.ArgumentTypeError):
+            trend_period("forever")
+
     def test_config_command_persists_display_settings(self):
         with tempfile.TemporaryDirectory() as directory:
             state_directory = Path(directory)
@@ -50,6 +55,8 @@ class AppTests(unittest.TestCase):
                         "2",
                         "--language",
                         "ja",
+                        "--trend-period",
+                        "12h",
                     ]
                 )
             self.assertEqual(result, 0)
@@ -58,6 +65,7 @@ class AppTests(unittest.TestCase):
             self.assertEqual(configured.rate_format, "percentage")
             self.assertEqual(configured.percentage_precision, 2)
             self.assertEqual(configured.language, "ja")
+            self.assertEqual(configured.trend_period, "12h")
 
 
 if __name__ == "__main__":

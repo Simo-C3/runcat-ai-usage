@@ -98,7 +98,7 @@ Re-run `./scripts/install.sh` to update a manual installation.
 | --- | --- |
 | **Rate** | Current plan utilization and, when available, used / limit |
 | **Today / 1h** | Counter increase since local midnight / over the last 60 minutes |
-| **7d Trend** | One character per local calendar day, oldest to newest; `·` means no recorded sample |
+| **Trend** | Seven equal time buckets across the configured period, oldest to newest; `·` means no recorded sample |
 
 History starts when the monitor is installed; earlier usage cannot be
 reconstructed. Today and trend rows require an absolute usage counter from the
@@ -120,21 +120,25 @@ Show the persistent display settings:
 runcat-ai-usage config show
 ```
 
-Change the visible rows, their order, Rate format, percentage precision, and
-label language:
+Change the visible rows, their order, Rate format, percentage precision, label
+language, and trend period:
 
 ```sh
 runcat-ai-usage config set \
   --rows rate,change,trend \
   --rate-format full \
   --percentage-precision 1 \
-  --language en
+  --language en \
+  --trend-period 1w
 ```
 
 - `--rows` accepts `rate`, `change`, and `trend` in any order.
 - `--rate-format percentage` hides the absolute used / limit values.
 - `--percentage-precision` accepts `0` through `3`.
 - `--language` accepts `en` or `ja` for metric row labels.
+- `--trend-period` accepts `1h`, `1d`, `1w`, `1mo`, or a custom duration such
+  as `90m`, `12h`, or `14d` (7 minutes through 365 days; `1mo` is 30 days).
+  Every period is rendered as seven equal-width trend buckets.
 
 Settings are saved in the state directory and take effect on the next monitor
 update. Restore the original display with:

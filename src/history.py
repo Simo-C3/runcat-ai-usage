@@ -1,8 +1,9 @@
 import sqlite3
-from datetime import date, datetime, time as datetime_time, timedelta
+from datetime import date, datetime, time as datetime_time
 from pathlib import Path
 from typing import Optional, Sequence
 
+from config import TREND_BUCKETS
 from models import HistoryData, Usage
 
 
@@ -73,7 +74,12 @@ class HistoryStore:
         values = ([baseline[0]] if baseline else []) + [row[0] for row in rows]
         return positive_delta(values)
 
-    def summary(self, service: str, now: float) -> HistoryData:
+    def summary(
+        self,
+        service: str,
+        now: float,
+        trend_period_seconds: int = 7 * 86400,
+    ) -> HistoryData:
         local_now = datetime.fromtimestamp(now).astimezone()
         today_start = local_midnight(local_now.date())
         today = self.period_delta(service, today_start, now)
@@ -81,17 +87,21 @@ class HistoryStore:
 
         daily = []
         days_with_samples = []
-        first_day = local_now.date() - timedelta(days=6)
-        for offset in range(7):
-            day = first_day + timedelta(days=offset)
-            start = local_midnight(day)
-            end = local_midnight(day + timedelta(days=1)) - 1
+        trend_start = now - trend_period_seconds
+        bucket_seconds = trend_period_seconds / TREND_BUCKETS
+        for offset in range(TREND_BUCKETS):
+            start = trend_start + bucket_seconds * offset
+            end = (
+                now
+                if offset == TREND_BUCKETS - 1
+                else trend_start + bucket_seconds * (offset + 1)
+            )
             present = (
                 self.connection.execute(
                     """
                     SELECT 1
                     FROM usage_samples
-                    WHERE service = ? AND sampled_at >= ? AND sampled_at <= ?
+                    WHERE service = ? AND sampled_at > ? AND sampled_at <= ?
                     LIMIT 1
                     """,
                     (service, int(start), int(end)),

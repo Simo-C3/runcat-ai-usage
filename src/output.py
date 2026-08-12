@@ -11,16 +11,35 @@ LABELS = {
     "en": {
         "rate": "Rate",
         "change": "Today / 1h",
-        "trend": "7d Trend",
+        "trend": "{} Trend",
         "unavailable": "Unavailable",
     },
     "ja": {
         "rate": "使用率",
         "change": "今日 / 1時間",
-        "trend": "7日推移",
+        "trend": "{}推移",
         "unavailable": "取得不可",
     },
 }
+
+
+def trend_period_label(period: str, language: str) -> str:
+    amount = int(period[:-2] if period.endswith("mo") else period[:-1])
+    unit = "mo" if period.endswith("mo") else period[-1]
+    if language == "en":
+        return "7d" if period == "1w" else period
+    if period == "1w":
+        return "7日"
+    return "{}{}".format(
+        amount,
+        {
+            "m": "分",
+            "h": "時間",
+            "d": "日",
+            "w": "週間",
+            "mo": "ヶ月",
+        }[unit],
+    )
 
 
 def percentage_value(percentage: float, precision: int = 1) -> str:
@@ -142,7 +161,9 @@ def snapshot(
         elif row == "trend" and history is not None:
             metrics.append(
                 {
-                    "title": labels["trend"],
+                    "title": labels["trend"].format(
+                        trend_period_label(config.trend_period, config.language)
+                    ),
                     "formattedValue": trend_value(history),
                 }
             )

@@ -82,13 +82,14 @@ class OutputTests(unittest.TestCase):
             rate_format="percentage",
             percentage_precision=2,
             language="ja",
+            trend_period="1mo",
         )
 
         value = snapshot("Codex", "camera.aperture", usage, 0, history, config)
 
         self.assertEqual(
             [metric["title"] for metric in value["metrics"]],
-            ["7日推移", "使用率"],
+            ["1ヶ月推移", "使用率"],
         )
         self.assertEqual(value["metrics"][1]["formattedValue"], "20.13%")
         self.assertEqual(value["metricsBarValue"], "20.13%")

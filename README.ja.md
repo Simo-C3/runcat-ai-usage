@@ -86,7 +86,7 @@ RunCat側で必要な設定はこのファイル選択だけです。必要に�
 | --- | --- |
 | **Rate** | 現在の利用率。取得できる場合は `使用量 / 上限` も表示 |
 | **Today / 1h** | ローカル日付の当日増加量 / 直近60分の増加量 |
-| **7d Trend** | 左が6日前、右が今日。`·` は記録なし |
+| **推移** | 設定期間を等分した7区間を古い順に表示。`·` は記録なし |
 
 履歴はインストール後から蓄積され、過去分は復元できません。TodayとTrendは
 サービスから絶対使用量を取得できる場合だけ表示されます。
@@ -105,20 +105,24 @@ RunCat側で必要な設定はこのファイル選択だけです。必要に�
 runcat-ai-usage config show
 ```
 
-表示する行と順序、Rateの形式、パーセント精度、ラベル言語を変更できます。
+表示する行と順序、Rateの形式、パーセント精度、ラベル言語、推移期間を変更できます。
 
 ```sh
 runcat-ai-usage config set \
   --rows rate,change,trend \
   --rate-format full \
   --percentage-precision 1 \
-  --language ja
+  --language ja \
+  --trend-period 1w
 ```
 
 - `--rows`: `rate`、`change`、`trend` を任意の順序で指定
 - `--rate-format percentage`: 使用量と上限を隠して利用率のみ表示
 - `--percentage-precision`: 小数点以下の最大桁数を `0`〜`3` で指定
 - `--language`: 項目ラベルを `en` または `ja` に変更
+- `--trend-period`: `1h`、`1d`、`1w`、`1mo`、または `90m`、`12h`、
+  `14d` のような7分〜365日の任意期間を指定（`1mo` は30日）。どの期間も
+  7つの等間隔な区間として推移を表示
 
 設定はstateディレクトリに保存され、次回の更新から反映されます。初期設定へ
 戻す場合は次を実行します。

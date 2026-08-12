@@ -10,11 +10,14 @@ from cache import FETCH_ERRORS, cached_usage
 from config import (
     DEFAULT_DISPLAY_CONFIG,
     LANGUAGES,
+    MAX_TREND_PERIOD_SECONDS,
     METRIC_ROWS,
     RATE_FORMATS,
+    TREND_PERIOD_PRESETS,
     DisplayConfig,
     load_display_config,
     save_display_config,
+    trend_period_seconds,
 )
 from history import HistoryStore
 from output import rate_value, write_snapshot
@@ -45,7 +48,11 @@ def run_once(
                 print("[{}] {}".format(service.title, result.error), file=sys.stderr)
             history_store.record(service.key, result.usage, result.fetched_at)
             history = (
-                history_store.summary(service.key, now)
+                history_store.summary(
+                    service.key,
+                    now,
+                    trend_period_seconds(display_config.trend_period),
+                )
                 if (
                     history_requested
                     and result.usage is not None
@@ -62,7 +69,7 @@ def run_once(
                 history,
                 display_config,
             )
-        history_store.prune(now - 40 * 86400)
+        history_store.prune(now - MAX_TREND_PERIOD_SECONDS - 86400)
 
 
 def doctor(home: Path) -> int:
@@ -118,6 +125,14 @@ def metric_rows(value: str) -> Tuple[str, ...]:
     if len(set(rows)) != len(rows):
         raise argparse.ArgumentTypeError("metric rows must not contain duplicates")
     return rows
+
+
+def trend_period(value: str) -> str:
+    try:
+        trend_period_seconds(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from error
+    return value
 
 
 def parser(home: Path) -> argparse.ArgumentParser:
@@ -183,6 +198,14 @@ def parser(home: Path) -> argparse.ArgumentParser:
         choices=LANGUAGES,
         help="metric label language",
     )
+    set_parser.add_argument(
+        "--trend-period",
+        type=trend_period,
+        metavar="PERIOD",
+        help=(
+            "trend window: {} or a custom duration such as 90m, 12h, or 14d"
+        ).format(",".join(TREND_PERIOD_PRESETS)),
+    )
     config_actions.add_parser("reset", help="restore default display settings")
     return argument_parser
 
@@ -206,6 +229,11 @@ def configure(arguments: argparse.Namespace, state_directory: Path) -> int:
                 arguments.language
                 if arguments.language is not None
                 else current.language
+            ),
+            trend_period=(
+                arguments.trend_period
+                if arguments.trend_period is not None
+                else current.trend_period
             ),
         )
         save_display_config(state_directory, current)
