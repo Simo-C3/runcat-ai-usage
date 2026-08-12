@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass(frozen=True)
@@ -35,8 +35,8 @@ class Usage:
 class HistoryData:
     today: float
     last_hour: float
-    daily: list
-    days_with_samples: list
+    daily: List[float]
+    days_with_samples: List[bool]
 
 
 def number(value: Any) -> Optional[float]:

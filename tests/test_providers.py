@@ -63,6 +63,15 @@ class ProviderParsingTests(unittest.TestCase):
         )
         self.assertEqual(usage.percentage, 30)
 
+    def test_codex_ignores_malformed_optional_sections(self):
+        usage = parse_codex_usage(
+            {
+                "spend_control": [],
+                "rate_limit": {"primary": {"used_percent": 18}},
+            }
+        )
+        self.assertEqual(usage.percentage, 18)
+
     def test_copilot_parses_ai_credits(self):
         usage = parse_copilot_usage(
             {
@@ -83,6 +92,13 @@ class ProviderParsingTests(unittest.TestCase):
     def test_missing_usage_raises_clear_error(self):
         with self.assertRaisesRegex(ProviderError, "Claude plan usage is unavailable"):
             parse_claude_usage({})
+
+    def test_malformed_copilot_quota_raises_provider_error(self):
+        with self.assertRaisesRegex(
+            ProviderError,
+            "GitHub Copilot plan usage is unavailable",
+        ):
+            parse_copilot_usage({"quota_snapshots": []})
 
 
 if __name__ == "__main__":

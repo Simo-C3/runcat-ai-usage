@@ -1,7 +1,7 @@
 import sqlite3
-from datetime import datetime, time as datetime_time, timedelta
+from datetime import date, datetime, time as datetime_time, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional, Sequence
 
 from .models import HistoryData, Usage
 
@@ -109,9 +109,15 @@ class HistoryStore:
         )
 
 
-def positive_delta(values: List[float]) -> float:
+def positive_delta(values: Sequence[float]) -> float:
     if len(values) < 2:
         return 0.0
+
+    suffix_maximums = [float("-inf")] * len(values)
+    suffix_maximums[-1] = values[-1]
+    for index in range(len(values) - 2, -1, -1):
+        suffix_maximums[index] = max(values[index], suffix_maximums[index + 1])
+
     total = 0.0
     previous = values[0]
     for index, current in enumerate(values[1:], start=1):
@@ -122,12 +128,12 @@ def positive_delta(values: List[float]) -> float:
 
         # Usage counters are monotonic within a billing period. Ignore a
         # temporary lower response when a later sample recovers to this level.
-        if any(later >= previous for later in values[index + 1 :]):
+        if index + 1 < len(values) and suffix_maximums[index + 1] >= previous:
             continue
         total += current
         previous = current
     return max(0.0, total)
 
 
-def local_midnight(day) -> float:
+def local_midnight(day: date) -> float:
     return datetime.combine(day, datetime_time.min).astimezone().timestamp()

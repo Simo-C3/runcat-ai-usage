@@ -2,51 +2,14 @@ import argparse
 import os
 import sys
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, List
+from typing import Optional, Sequence
 
 from . import __version__
 from .cache import FETCH_ERRORS, cached_usage
 from .history import HistoryStore
-from .models import Usage
 from .output import rate_value, write_snapshot
-from .providers import collect_claude, collect_codex, collect_copilot
-
-
-@dataclass(frozen=True)
-class Service:
-    key: str
-    filename: str
-    title: str
-    symbol: str
-    fetcher: Callable[[], Usage]
-
-
-def services(home: Path) -> List[Service]:
-    return [
-        Service(
-            "claude-code",
-            "claude-code.json",
-            "Claude Code",
-            "staroflife",
-            lambda: collect_claude(home),
-        ),
-        Service(
-            "codex",
-            "codex.json",
-            "Codex",
-            "camera.aperture",
-            lambda: collect_codex(home),
-        ),
-        Service(
-            "github-copilot",
-            "github-copilot.json",
-            "GitHub Copilot",
-            "chevron.left.forwardslash.chevron.right",
-            lambda: collect_copilot(home),
-        ),
-    ]
+from .services import services
 
 
 def run_once(
@@ -107,10 +70,20 @@ def default_output_directory(home: Path) -> Path:
     return Path(configured).expanduser() if configured else home / "RunCatMetrics"
 
 
+def non_negative_int(value: str) -> int:
+    try:
+        parsed = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("must be an integer") from error
+    if parsed < 0:
+        raise argparse.ArgumentTypeError("must be zero or greater")
+    return parsed
+
+
 def parser(home: Path) -> argparse.ArgumentParser:
     argument_parser = argparse.ArgumentParser(
         prog="runcat-ai-usage",
-        description="Write AI plan usage snapshots for RunCat Neo."
+        description="Write AI plan usage snapshots for RunCat Neo.",
     )
     argument_parser.add_argument(
         "--output-dir",
@@ -126,8 +99,8 @@ def parser(home: Path) -> argparse.ArgumentParser:
     )
     argument_parser.add_argument(
         "--refresh-seconds",
-        type=int,
-        default=int(os.environ.get("RUNCAT_AI_USAGE_REFRESH_SECONDS", "55")),
+        type=non_negative_int,
+        default=os.environ.get("RUNCAT_AI_USAGE_REFRESH_SECONDS", "55"),
         help="minimum provider API refresh interval",
     )
     argument_parser.add_argument(
@@ -143,11 +116,9 @@ def parser(home: Path) -> argparse.ArgumentParser:
     return argument_parser
 
 
-def main(argv=None) -> int:
+def main(argv: Optional[Sequence[str]] = None) -> int:
     home = Path.home()
     arguments = parser(home).parse_args(argv)
-    if arguments.refresh_seconds < 0:
-        parser(home).error("--refresh-seconds must be zero or greater")
     if arguments.doctor:
         return doctor(home)
     run_once(
