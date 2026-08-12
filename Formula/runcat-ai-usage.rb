@@ -37,8 +37,6 @@ class RuncatAiUsage < Formula
   end
 
   def post_install
-    return if ENV["RUNCAT_AI_USAGE_SKIP_SETUP"] == "1"
-
     system bin/"runcat-ai-usage-install", "--no-open"
   end
 

@@ -11,6 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 FORMULA = ROOT / "Formula" / "runcat-ai-usage.rb"
 INSTALLER = ROOT / "scripts" / "install.sh"
+TEST_WORKFLOW = ROOT / ".github" / "workflows" / "test.yml"
+RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 
 
 class HomebrewInstallationTests(unittest.TestCase):
@@ -18,10 +20,14 @@ class HomebrewInstallationTests(unittest.TestCase):
         content = FORMULA.read_text(encoding="utf-8")
         self.assertIn("def post_install", content)
         self.assertIn('system bin/"runcat-ai-usage-install", "--no-open"', content)
-        self.assertIn('ENV["RUNCAT_AI_USAGE_SKIP_SETUP"]', content)
 
         installer = INSTALLER.read_text(encoding="utf-8")
         self.assertIn('if [ "$OPEN_OUTPUT" = true ]', installer)
+
+    def test_workflows_skip_post_install_during_formula_tests(self):
+        for workflow in (TEST_WORKFLOW, RELEASE_WORKFLOW):
+            content = workflow.read_text(encoding="utf-8")
+            self.assertIn("brew install --skip-post-install", content)
 
     @unittest.skipUnless(sys.platform == "darwin", "requires macOS")
     def test_no_open_installs_monitor_without_launching_real_agent(self):

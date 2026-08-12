@@ -87,11 +87,9 @@ jobs:
           fi
 
       - name: Test released Homebrew Formula
-        env:
-          RUNCAT_AI_USAGE_SKIP_SETUP: "1"
         run: |
           brew tap local/release "$GITHUB_WORKSPACE"
-          brew install local/release/runcat-ai-usage
+          brew install --skip-post-install local/release/runcat-ai-usage
           brew test local/release/runcat-ai-usage
 
       - name: Publish Homebrew Formula
