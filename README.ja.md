@@ -18,6 +18,11 @@ Today / 1h: 145 / 12 AIC
 
 [English](README.md)
 
+## ドキュメント
+
+設定、データ保存、開発者向け情報は[ドキュメント一覧](docs/README.md)に
+まとめています。
+
 ## 必要なもの
 
 - macOS 13以降

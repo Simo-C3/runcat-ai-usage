@@ -7,8 +7,10 @@ Stable releases use annotated SemVer tags in the form `vMAJOR.MINOR.PATCH`.
 Start from a clean, up-to-date `main` branch:
 
 ```sh
-./scripts/release.sh 0.2.0 --push
+./scripts/release.sh NEXT_VERSION --push
 ```
+
+Replace `NEXT_VERSION` with the next stable version, for example `0.3.2`.
 
 The script:
 
@@ -16,7 +18,7 @@ The script:
 2. Updates `pyproject.toml` and `src/runcat_ai_usage.py`.
 3. Runs the unit tests.
 4. Creates a version commit when needed.
-5. Creates an annotated `v0.2.0` tag and pushes the branch and tag.
+5. Creates an annotated `vMAJOR.MINOR.PATCH` tag and pushes the branch and tag.
 
 Omit `--push` to inspect the tag locally before pushing it.
 The script rejects version downgrades, duplicate tags, dirty worktrees, and a

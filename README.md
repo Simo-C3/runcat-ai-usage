@@ -24,6 +24,11 @@ and keeps up to 366 days of local usage history. No Python packages are required
 
 [日本語](README.ja.md)
 
+## Documentation
+
+Configuration, data storage, and development notes are collected in the
+[project documentation](docs/README.md) (Japanese).
+
 ## Requirements
 
 - macOS 13 or later
@@ -170,7 +175,7 @@ launchctl kickstart -k "gui/$(id -u)/dev.runcat.ai-usage"
 Use a different snapshot directory during installation:
 
 ```sh
-RUNCAT_AI_USAGE_OUTPUT_DIR="$HOME/MyMetrics" brew install runcat-ai-usage
+RUNCAT_AI_USAGE_OUTPUT_DIR="$HOME/MyMetrics" runcat-ai-usage-install
 ```
 
 ## Troubleshooting
