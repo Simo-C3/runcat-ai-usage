@@ -20,7 +20,7 @@ Today / 1h: 145 / 12 AIC
 
 The monitor refreshes every minute, writes
 [Custom Metrics JSON](https://github.com/runcat-dev/RunCatNeo/blob/main/docs/CustomMetricsSchema.md),
-and keeps 40 days of local usage history. No Python packages are required.
+and keeps up to 366 days of local usage history. No Python packages are required.
 
 [日本語](README.ja.md)
 
@@ -45,7 +45,6 @@ additionally requires `/usr/bin/python3`.
 brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
 brew trust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew install runcat-ai-usage
-runcat-ai-usage-install
 ```
 
 The `brew trust` command grants trust to this Formula only, not to every
@@ -56,12 +55,12 @@ To upgrade:
 ```sh
 brew update
 brew upgrade runcat-ai-usage
-runcat-ai-usage-install
 ```
 
-The final command installs or updates the named background app, starts its
-one-minute LaunchAgent, generates the initial snapshots, and opens
-`~/RunCatMetrics`. Existing history is preserved.
+Homebrew automatically installs or updates the named background app, starts its
+one-minute LaunchAgent, and generates the initial snapshots during install and
+upgrade. Existing history is preserved. Run `runcat-ai-usage-install` only to
+repair or restart this setup manually.
 
 ## Install manually
 
@@ -171,7 +170,7 @@ launchctl kickstart -k "gui/$(id -u)/dev.runcat.ai-usage"
 Use a different snapshot directory during installation:
 
 ```sh
-RUNCAT_AI_USAGE_OUTPUT_DIR="$HOME/MyMetrics" runcat-ai-usage-install
+RUNCAT_AI_USAGE_OUTPUT_DIR="$HOME/MyMetrics" brew install runcat-ai-usage
 ```
 
 ## Troubleshooting

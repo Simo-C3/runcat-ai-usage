@@ -39,6 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install and test Formula
+        env:
+          RUNCAT_AI_USAGE_SKIP_SETUP: "1"
         run: |
           brew style Formula/runcat-ai-usage.rb
           brew tap local/runcat-ai-usage "$GITHUB_WORKSPACE"

@@ -16,6 +16,18 @@ OUTPUT_DIR="${RUNCAT_AI_USAGE_OUTPUT_DIR:-$HOME/RunCatMetrics}"
 PYTHON_BIN="${RUNCAT_AI_USAGE_PYTHON:-/usr/bin/python3}"
 LAUNCH_AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"
 DOMAIN="gui/$(id -u)"
+OPEN_OUTPUT=true
+
+if [ "$#" -gt 1 ]; then
+    echo "Usage: $0 [--no-open]" >&2
+    exit 2
+fi
+if [ "${1:-}" = "--no-open" ]; then
+    OPEN_OUTPUT=false
+elif [ "$#" -eq 1 ]; then
+    echo "Usage: $0 [--no-open]" >&2
+    exit 2
+fi
 
 if [ "$(uname -s)" != "Darwin" ]; then
     echo "runcat-ai-usage supports macOS only." >&2
@@ -150,4 +162,6 @@ echo "Installed $APP_NAME."
 echo "Metrics: $OUTPUT_DIR"
 echo "RunCat Neo: Settings > Metrics > Custom Metrics > Add Custom Metrics Source"
 echo "Add claude-code.json, codex.json, and github-copilot.json."
-/usr/bin/open "$OUTPUT_DIR"
+if [ "$OPEN_OUTPUT" = true ]; then
+    /usr/bin/open "$OUTPUT_DIR"
+fi

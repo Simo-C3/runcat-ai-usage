@@ -13,7 +13,7 @@ Today / 1h: 145 / 12 AIC
 7d Trend:   ▁▂▃▅▆▇█
 ```
 
-1分ごとに値を更新し、ローカルに40日分の履歴を保存します。外部Python
+1分ごとに値を更新し、ローカルに最大366日分の履歴を保存します。外部Python
 パッケージは不要です。
 
 [English](README.md)
@@ -39,7 +39,6 @@ Homebrewでインストールする場合、Pythonも自動で管理されます
 brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
 brew trust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew install runcat-ai-usage
-runcat-ai-usage-install
 ```
 
 `brew trust` ではtap全体ではなく、このFormulaだけを信頼対象にします。
@@ -49,12 +48,12 @@ runcat-ai-usage-install
 ```sh
 brew update
 brew upgrade runcat-ai-usage
-runcat-ai-usage-install
 ```
 
-最後のコマンドで、名前付きバックグラウンドアプリのインストールまたは更新、
-1分間隔のLaunchAgentの起動、初回JSON生成、`~/RunCatMetrics` の表示まで
-行います。既存の履歴は維持されます。
+Homebrewが名前付きバックグラウンドアプリのインストールまたは更新、1分間隔の
+LaunchAgentの起動、初回JSON生成まで自動で行います。既存の履歴は維持されます。
+`runcat-ai-usage-install` はセットアップの修復や手動再起動が必要な場合だけ
+実行してください。
 
 ## 手動でインストール
 
