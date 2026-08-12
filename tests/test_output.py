@@ -3,11 +3,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from config import DisplayConfig
 from models import HistoryData, Usage
-from output import rate_value, snapshot, write_snapshot
+from output import percentage_value, rate_value, snapshot, write_snapshot
 
 
 class OutputTests(unittest.TestCase):
+    def test_zero_percentage_precision_keeps_significant_zeroes(self):
+        self.assertEqual(percentage_value(20, 0), "20%")
+
     def test_compact_count_rate(self):
         usage = Usage(
             percentage=14.1,
@@ -58,6 +62,36 @@ class OutputTests(unittest.TestCase):
             with path.open(encoding="utf-8") as source:
                 value = json.load(source)
             self.assertEqual(value["metricsBarValue"], "N/A")
+
+    def test_display_config_changes_rows_format_and_language(self):
+        usage = Usage(
+            percentage=20.126,
+            used_amount=10,
+            limit_amount=50,
+            amount_kind="count",
+            unit="credits",
+        )
+        history = HistoryData(
+            today=3,
+            last_hour=1,
+            daily=[0, 0, 0, 0, 0, 2, 3],
+            days_with_samples=[False, False, False, False, False, True, True],
+        )
+        config = DisplayConfig(
+            rows=("trend", "rate"),
+            rate_format="percentage",
+            percentage_precision=2,
+            language="ja",
+        )
+
+        value = snapshot("Codex", "camera.aperture", usage, 0, history, config)
+
+        self.assertEqual(
+            [metric["title"] for metric in value["metrics"]],
+            ["7日推移", "使用率"],
+        )
+        self.assertEqual(value["metrics"][1]["formattedValue"], "20.13%")
+        self.assertEqual(value["metricsBarValue"], "20.13%")
 
 
 if __name__ == "__main__":

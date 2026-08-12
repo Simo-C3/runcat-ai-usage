@@ -114,6 +114,38 @@ Provider plans expose different values:
 
 ## Commands
 
+Show the persistent display settings:
+
+```sh
+runcat-ai-usage config show
+```
+
+Change the visible rows, their order, Rate format, percentage precision, and
+label language:
+
+```sh
+runcat-ai-usage config set \
+  --rows rate,change,trend \
+  --rate-format full \
+  --percentage-precision 1 \
+  --language en
+```
+
+- `--rows` accepts `rate`, `change`, and `trend` in any order.
+- `--rate-format percentage` hides the absolute used / limit values.
+- `--percentage-precision` accepts `0` through `3`.
+- `--language` accepts `en` or `ja` for metric row labels.
+
+Settings are saved in the state directory and take effect on the next monitor
+update. Restore the original display with:
+
+```sh
+runcat-ai-usage config reset
+```
+
+For a manual installation, replace `runcat-ai-usage` in these examples with
+the full monitor app executable path shown below.
+
 Check credentials and provider responses without printing secrets:
 
 ```sh

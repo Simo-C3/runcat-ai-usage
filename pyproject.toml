@@ -24,6 +24,7 @@ runcat-ai-usage = "runcat_ai_usage:main"
 py-modules = [
     "app",
     "cache",
+    "config",
     "history",
     "models",
     "output",

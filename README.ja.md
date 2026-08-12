@@ -97,7 +97,40 @@ RunCat側で必要な設定はこのファイル選択だけです。必要に�
 | Codex | Workspaceの個人Spend Control。なければ取得できたローリング利用率の高い方 |
 | GitHub Copilot | 月次Premium Request（AI Credit）枠 |
 
-## 診断
+## コマンド
+
+現在の表示設定を確認します。
+
+```sh
+runcat-ai-usage config show
+```
+
+表示する行と順序、Rateの形式、パーセント精度、ラベル言語を変更できます。
+
+```sh
+runcat-ai-usage config set \
+  --rows rate,change,trend \
+  --rate-format full \
+  --percentage-precision 1 \
+  --language ja
+```
+
+- `--rows`: `rate`、`change`、`trend` を任意の順序で指定
+- `--rate-format percentage`: 使用量と上限を隠して利用率のみ表示
+- `--percentage-precision`: 小数点以下の最大桁数を `0`〜`3` で指定
+- `--language`: 項目ラベルを `en` または `ja` に変更
+
+設定はstateディレクトリに保存され、次回の更新から反映されます。初期設定へ
+戻す場合は次を実行します。
+
+```sh
+runcat-ai-usage config reset
+```
+
+手動インストールの場合、例中の `runcat-ai-usage` は下記の診断で示す
+バックグラウンドアプリの実行ファイルパスに読み替えてください。
+
+### 診断
 
 認証情報を表示せずに、3サービスの接続状況を確認できます。
 
