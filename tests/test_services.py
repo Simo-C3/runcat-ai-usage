@@ -14,6 +14,7 @@ class ServiceCatalogTests(unittest.TestCase):
             len(catalog),
         )
         self.assertTrue(all(callable(service.fetcher) for service in catalog))
+        self.assertTrue(all(callable(service.state_key) for service in catalog))
 
 
 if __name__ == "__main__":

@@ -228,7 +228,9 @@ Remove the three Custom Metrics sources from RunCat Neo separately.
 ## Privacy and API stability
 
 All processing and history storage are local. Credentials are read only at
-request time and are never written by this project. See [SECURITY.md](SECURITY.md).
+request time and are never written by this project. Claude cache and history
+are separated per sign-in with an opaque credential fingerprint. See
+[SECURITY.md](SECURITY.md).
 
 Claude and Codex usage endpoints and GitHub's Copilot endpoint are not stable
 public APIs. Provider updates may require changes to this project.

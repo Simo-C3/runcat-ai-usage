@@ -4,10 +4,11 @@ from pathlib import Path
 from typing import Callable, List
 
 from models import Usage
-from providers import collect_claude, collect_codex, collect_copilot
+from providers import claude_state_key, collect_claude, collect_codex, collect_copilot
 
 
 UsageFetcher = Callable[[], Usage]
+StateKeyResolver = Callable[[], str]
 
 
 @dataclass(frozen=True)
@@ -17,6 +18,7 @@ class Service:
     title: str
     symbol: str
     fetcher: UsageFetcher
+    state_key: StateKeyResolver
 
 
 def services(home: Path) -> List[Service]:
@@ -28,6 +30,7 @@ def services(home: Path) -> List[Service]:
             "Claude Code",
             "staroflife",
             partial(collect_claude, home),
+            partial(claude_state_key, home),
         ),
         Service(
             "codex",
@@ -35,6 +38,7 @@ def services(home: Path) -> List[Service]:
             "Codex",
             "camera.aperture",
             partial(collect_codex, home),
+            lambda: "codex",
         ),
         Service(
             "github-copilot",
@@ -42,5 +46,6 @@ def services(home: Path) -> List[Service]:
             "GitHub Copilot",
             "chevron.left.forwardslash.chevron.right",
             partial(collect_copilot, home),
+            lambda: "github-copilot",
         ),
     ]

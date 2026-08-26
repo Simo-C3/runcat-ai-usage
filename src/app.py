@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
-from cache import FETCH_ERRORS, cached_usage
+from cache import CacheResult, FETCH_ERRORS, cached_usage
 from config import (
     DEFAULT_DISPLAY_CONFIG,
     LANGUAGES,
@@ -38,18 +38,23 @@ def run_once(
     )
     with HistoryStore(state_directory / "history.db") as history_store:
         for service in services(home):
-            result = cached_usage(
-                state_directory / "cache" / "{}.json".format(service.key),
-                service.fetcher,
-                refresh_seconds,
-                now,
-            )
+            try:
+                state_key = service.state_key()
+                result = cached_usage(
+                    state_directory / "cache" / "{}.json".format(state_key),
+                    service.fetcher,
+                    refresh_seconds,
+                    now,
+                )
+            except FETCH_ERRORS as error:
+                state_key = service.key
+                result = CacheResult(None, None, error)
             if result.error is not None:
                 print("[{}] {}".format(service.title, result.error), file=sys.stderr)
-            history_store.record(service.key, result.usage, result.fetched_at)
+            history_store.record(state_key, result.usage, result.fetched_at)
             history = (
                 history_store.summary(
-                    service.key,
+                    state_key,
                     now,
                     trend_period_seconds(display_config.trend_period),
                 )

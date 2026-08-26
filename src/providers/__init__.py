@@ -1,12 +1,19 @@
 """Provider integrations and usage response parsers."""
 
-from .claude import collect_claude, parse_claude_usage
+from .claude import (
+    claude_profile_key,
+    claude_state_key,
+    collect_claude,
+    parse_claude_usage,
+)
 from .codex import collect_codex, parse_codex_usage
 from .common import ProviderError, fetch_json
 from .copilot import collect_copilot, find_gh, parse_copilot_usage
 
 __all__ = [
     "ProviderError",
+    "claude_profile_key",
+    "claude_state_key",
     "collect_claude",
     "collect_codex",
     "collect_copilot",

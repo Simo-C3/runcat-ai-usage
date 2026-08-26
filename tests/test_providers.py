@@ -2,6 +2,7 @@ import unittest
 
 from providers import (
     ProviderError,
+    claude_profile_key,
     parse_claude_usage,
     parse_codex_usage,
     parse_copilot_usage,
@@ -9,6 +10,57 @@ from providers import (
 
 
 class ProviderParsingTests(unittest.TestCase):
+    def test_claude_profile_key_uses_account_identifier_when_available(self):
+        first = claude_profile_key(
+            {
+                "claudeAiOauth": {
+                    "accessToken": "first-access-token",
+                    "refreshToken": "first-refresh-token",
+                    "accountUuid": "account-a",
+                }
+            }
+        )
+        refreshed = claude_profile_key(
+            {
+                "claudeAiOauth": {
+                    "accessToken": "second-access-token",
+                    "refreshToken": "second-refresh-token",
+                    "accountUuid": "account-a",
+                }
+            }
+        )
+        other_account = claude_profile_key(
+            {
+                "claudeAiOauth": {
+                    "accessToken": "third-access-token",
+                    "refreshToken": "third-refresh-token",
+                    "accountUuid": "account-b",
+                }
+            }
+        )
+        other_organization = claude_profile_key(
+            {
+                "claudeAiOauth": {
+                    "accessToken": "fourth-access-token",
+                    "refreshToken": "fourth-refresh-token",
+                    "accountUuid": "account-a",
+                    "organizationUuid": "organization-b",
+                }
+            }
+        )
+
+        self.assertEqual(first, refreshed)
+        self.assertNotEqual(first, other_account)
+        self.assertNotEqual(first, other_organization)
+        self.assertEqual(len(first), 16)
+        self.assertNotIn("account-a", first)
+
+    def test_claude_profile_key_falls_back_to_a_credential_fingerprint(self):
+        first = claude_profile_key({"accessToken": "license-one"})
+        second = claude_profile_key({"accessToken": "license-two"})
+
+        self.assertNotEqual(first, second)
+
     def test_claude_prefers_highest_rolling_window(self):
         usage = parse_claude_usage(
             {

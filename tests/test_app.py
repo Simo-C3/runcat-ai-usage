@@ -5,8 +5,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from app import main, metric_rows, non_negative_int, parser, trend_period
+from app import main, metric_rows, non_negative_int, parser, run_once, trend_period
 from config import load_display_config
+from history import HistoryStore
+from models import Usage
+from services import Service
 
 
 class AppTests(unittest.TestCase):
@@ -66,6 +69,45 @@ class AppTests(unittest.TestCase):
             self.assertEqual(configured.percentage_precision, 2)
             self.assertEqual(configured.language, "ja")
             self.assertEqual(configured.trend_period, "12h")
+
+    def test_claude_state_key_isolates_cache_and_history(self):
+        active_state_key = ["claude-code-license-a"]
+        usages = iter(
+            [
+                Usage(percentage=10, used_amount=100),
+                Usage(percentage=20, used_amount=7),
+            ]
+        )
+        service = Service(
+            "claude-code",
+            "claude-code.json",
+            "Claude Code",
+            "staroflife",
+            lambda: next(usages),
+            lambda: active_state_key[0],
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with mock.patch("app.services", return_value=[service]):
+                run_once(root, root / "output", root / "state", 55)
+                active_state_key[0] = "claude-code-license-b"
+                run_once(root, root / "output", root / "state", 55)
+
+            cache_directory = root / "state" / "cache"
+            self.assertTrue((cache_directory / "claude-code-license-a.json").exists())
+            self.assertTrue((cache_directory / "claude-code-license-b.json").exists())
+            with HistoryStore(root / "state" / "history.db") as history:
+                keys = {
+                    row[0]
+                    for row in history.connection.execute(
+                        "SELECT DISTINCT service FROM usage_samples"
+                    )
+                }
+            self.assertEqual(
+                keys,
+                {"claude-code-license-a", "claude-code-license-b"},
+            )
 
 
 if __name__ == "__main__":
