@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import date, datetime, time as datetime_time
+from datetime import date, datetime, time as datetime_time, timedelta
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -87,15 +87,7 @@ class HistoryStore:
 
         daily = []
         days_with_samples = []
-        trend_start = now - trend_period_seconds
-        bucket_seconds = trend_period_seconds / TREND_BUCKETS
-        for offset in range(TREND_BUCKETS):
-            start = trend_start + bucket_seconds * offset
-            end = (
-                now
-                if offset == TREND_BUCKETS - 1
-                else trend_start + bucket_seconds * (offset + 1)
-            )
+        for start, end in trend_bucket_bounds(now, trend_period_seconds):
             present = (
                 self.connection.execute(
                     """
@@ -147,3 +139,42 @@ def positive_delta(values: Sequence[float]) -> float:
 
 def local_midnight(day: date) -> float:
     return datetime.combine(day, datetime_time.min).astimezone().timestamp()
+
+
+def trend_bucket_bounds(
+    now: float,
+    period_seconds: int,
+) -> Sequence[tuple[float, float]]:
+    """Return oldest-first trend ranges, aligned to local dates when possible."""
+    if period_seconds >= TREND_BUCKETS * 86400 and period_seconds % 86400 == 0:
+        period_days = period_seconds // 86400
+        today = datetime.fromtimestamp(now).astimezone().date()
+        first_day = today - timedelta(days=period_days - 1)
+        bounds = []
+        for offset in range(TREND_BUCKETS):
+            start_day = first_day + timedelta(
+                days=period_days * offset // TREND_BUCKETS
+            )
+            if offset == TREND_BUCKETS - 1:
+                end = now
+            else:
+                end_day = first_day + timedelta(
+                    days=period_days * (offset + 1) // TREND_BUCKETS
+                )
+                end = local_midnight(end_day)
+            bounds.append((local_midnight(start_day), end))
+        return bounds
+
+    trend_start = now - period_seconds
+    bucket_seconds = period_seconds / TREND_BUCKETS
+    return [
+        (
+            trend_start + bucket_seconds * offset,
+            (
+                now
+                if offset == TREND_BUCKETS - 1
+                else trend_start + bucket_seconds * (offset + 1)
+            ),
+        )
+        for offset in range(TREND_BUCKETS)
+    ]

@@ -1,8 +1,9 @@
+from datetime import date, timedelta
+from pathlib import Path
 import tempfile
 import unittest
-from pathlib import Path
 
-from history import HistoryStore, positive_delta
+from history import HistoryStore, local_midnight, positive_delta
 from models import Usage
 
 
@@ -39,6 +40,35 @@ class HistoryTests(unittest.TestCase):
                 summary = store.summary("codex", 4800, 4200)
                 self.assertEqual(summary.daily, [1] * 7)
                 self.assertEqual(summary.days_with_samples, [True] * 7)
+
+    def test_summary_aligns_day_based_trends_to_local_dates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.db"
+            today = date(2026, 1, 15)
+            now = local_midnight(today) + 12 * 3600
+            first_day = today - timedelta(days=6)
+            used = 100
+            with HistoryStore(path) as store:
+                for offset in range(7):
+                    day = first_day + timedelta(days=offset)
+                    start = local_midnight(day)
+                    store.record(
+                        "codex",
+                        Usage(percentage=10, used_amount=used),
+                        start,
+                    )
+                    used += offset + 1
+                    event_time = start + (9 if offset == 6 else 18) * 3600
+                    store.record(
+                        "codex",
+                        Usage(percentage=10, used_amount=used),
+                        event_time,
+                    )
+
+                summary = store.summary("codex", now, 7 * 86400)
+
+            self.assertEqual(summary.daily, [1, 2, 3, 4, 5, 6, 7])
+            self.assertEqual(summary.days_with_samples, [True] * 7)
 
     def test_record_skips_usage_without_absolute_amount(self):
         with tempfile.TemporaryDirectory() as directory:
