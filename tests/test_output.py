@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from config import DisplayConfig
-from models import HistoryData, Usage
+from models import HistoryData, MonthlyUsage, Usage, UsageWindow
 from output import percentage_value, rate_value, snapshot, write_snapshot
 
 
@@ -93,6 +93,49 @@ class OutputTests(unittest.TestCase):
         )
         self.assertEqual(value["metrics"][1]["formattedValue"], "20.13%")
         self.assertEqual(value["metricsBarValue"], "20.13%")
+
+    def test_claude_windows_are_shown_separately(self):
+        usage = Usage(
+            percentage=27.5,
+            windows=(
+                UsageWindow("five_hour", 12),
+                UsageWindow("seven_day", 27.5),
+            ),
+        )
+        config = DisplayConfig(rows=("rate",), language="ja")
+
+        value = snapshot("Claude Code", "staroflife", usage, 0, None, config)
+
+        self.assertEqual(
+            value["metrics"],
+            [
+                {"title": "5時間", "formattedValue": "12%"},
+                {"title": "7日", "formattedValue": "27.5%"},
+            ],
+        )
+        self.assertEqual(value["metricsBarValue"], "27.5%")
+
+    def test_claude_shows_disabled_monthly_usage(self):
+        usage = Usage(
+            percentage=12,
+            windows=(
+                UsageWindow("five_hour", 12),
+                UsageWindow("seven_day", 0),
+            ),
+            monthly=MonthlyUsage(enabled=False),
+        )
+        config = DisplayConfig(rows=("rate",), language="ja")
+
+        value = snapshot("Claude Code", "staroflife", usage, 0, None, config)
+
+        self.assertEqual(
+            value["metrics"],
+            [
+                {"title": "5時間", "formattedValue": "12%"},
+                {"title": "7日", "formattedValue": "0%"},
+                {"title": "月次", "formattedValue": "無効"},
+            ],
+        )
 
 
 if __name__ == "__main__":

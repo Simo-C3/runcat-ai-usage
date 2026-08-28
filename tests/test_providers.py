@@ -70,6 +70,23 @@ class ProviderParsingTests(unittest.TestCase):
         )
         self.assertEqual(usage.percentage, 27.5)
         self.assertIsNone(usage.used_amount)
+        self.assertEqual(
+            [(window.key, window.percentage) for window in usage.windows],
+            [("five_hour", 12), ("seven_day", 27.5)],
+        )
+
+    def test_claude_exposes_disabled_monthly_extra_usage(self):
+        usage = parse_claude_usage(
+            {
+                "five_hour": {"utilization": 12},
+                "seven_day": {"utilization": 27.5},
+                "extra_usage": {"is_enabled": False, "user_disabled": True},
+            }
+        )
+
+        self.assertIsNotNone(usage.monthly)
+        self.assertFalse(usage.monthly.enabled)
+        self.assertIsNone(usage.monthly.percentage)
 
     def test_claude_parses_enterprise_extra_usage(self):
         usage = parse_claude_usage(
@@ -87,6 +104,8 @@ class ProviderParsingTests(unittest.TestCase):
         self.assertAlmostEqual(usage.percentage, 0.268)
         self.assertEqual(usage.used_amount, 2.68)
         self.assertEqual(usage.limit_amount, 1000)
+        self.assertTrue(usage.monthly.enabled)
+        self.assertAlmostEqual(usage.monthly.percentage, 0.268)
 
     def test_codex_parses_spend_control(self):
         usage = parse_codex_usage(

@@ -2,9 +2,9 @@ import hashlib
 import json
 import subprocess
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 
-from models import Usage, number
+from models import MonthlyUsage, Usage, UsageWindow, number
 from .common import HttpGet, JsonObject, ProviderError, fetch_json, object_value
 
 
@@ -84,35 +84,61 @@ def claude_state_key(home: Path) -> str:
 
 
 def parse_claude_usage(payload: JsonObject) -> Usage:
-    percentages = []
+    windows = []
     for key in ("five_hour", "seven_day"):
         window = object_value(payload.get(key))
         utilization = number(window.get("utilization"))
         if utilization is not None:
-            percentages.append(utilization)
-    if percentages:
-        return Usage(percentage=max(percentages))
-
+            windows.append(UsageWindow(key=key, percentage=utilization))
     extra_usage = object_value(payload.get("extra_usage"))
-    used_minor = number(extra_usage.get("used_credits"))
-    limit_minor = number(extra_usage.get("monthly_limit"))
-    decimal_places = int(number(extra_usage.get("decimal_places")) or 0)
-    currency = str(extra_usage.get("currency") or "")
-    if used_minor is not None and limit_minor:
-        scale = 10 ** decimal_places
+    monthly = _monthly_usage(extra_usage)
+    if windows:
         return Usage(
-            percentage=used_minor / limit_minor * 100,
-            used_amount=used_minor / scale,
-            limit_amount=limit_minor / scale,
-            amount_kind="currency",
-            currency=currency,
-            decimal_places=decimal_places,
+            percentage=max(window.percentage for window in windows),
+            windows=tuple(windows),
+            monthly=monthly,
         )
 
-    utilization = number(extra_usage.get("utilization"))
-    if utilization is None:
+    if monthly is None or monthly.percentage is None:
         raise ProviderError("Claude plan usage is unavailable")
-    return Usage(percentage=utilization)
+    return Usage(
+        percentage=monthly.percentage,
+        used_amount=monthly.used_amount,
+        limit_amount=monthly.limit_amount,
+        amount_kind="currency",
+        currency=monthly.currency,
+        decimal_places=monthly.decimal_places,
+        monthly=monthly,
+    )
+
+
+def _monthly_usage(extra_usage: JsonObject) -> Optional[MonthlyUsage]:
+    used_minor = number(extra_usage.get("used_credits"))
+    limit_minor = number(extra_usage.get("monthly_limit"))
+    utilization = number(extra_usage.get("utilization"))
+    is_enabled = extra_usage.get("is_enabled")
+    has_values = (
+        used_minor is not None or limit_minor is not None or utilization is not None
+    )
+    if not isinstance(is_enabled, bool) and not has_values:
+        return None
+
+    enabled = is_enabled if isinstance(is_enabled, bool) else True
+    decimal_places = int(number(extra_usage.get("decimal_places")) or 0)
+    scale = 10 ** decimal_places
+    percentage = (
+        used_minor / limit_minor * 100
+        if enabled and used_minor is not None and limit_minor
+        else utilization if enabled else None
+    )
+    return MonthlyUsage(
+        enabled=enabled,
+        percentage=percentage,
+        used_amount=used_minor / scale if enabled and used_minor is not None else None,
+        limit_amount=limit_minor / scale if enabled and limit_minor is not None else None,
+        currency=str(extra_usage.get("currency") or ""),
+        decimal_places=decimal_places,
+    )
 
 
 def collect_claude(home: Path, http_get: HttpGet = fetch_json) -> Usage:

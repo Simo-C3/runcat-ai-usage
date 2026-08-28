@@ -99,7 +99,7 @@ Claude のキャッシュと履歴は、資格情報から算出した非可逆�
 
 | サービス | Rateに使う値 |
 | --- | --- |
-| Claude Code | 5時間・7日枠の高い方。該当枠がないEnterpriseでは月次Extra Usage |
+| Claude Code | 5時間・7日枠を個別表示。月次Extra Usageは利用額・上限、無効時は「無効」を表示 |
 | Codex | Workspaceの個人Spend Control。なければ取得できたローリング利用率の高い方 |
 | GitHub Copilot | 月次Premium Request（AI Credit）枠 |
 

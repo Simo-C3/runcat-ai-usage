@@ -112,7 +112,7 @@ Provider plans expose different values:
 
 | Provider | Value used |
 | --- | --- |
-| Claude Code | Higher of the 5-hour and 7-day utilization windows; Enterprise accounts without those windows use the monthly extra-usage budget |
+| Claude Code | Separate 5-hour and 7-day utilization windows; monthly extra usage shows its amount and limit, or Disabled when unavailable |
 | Codex | Workspace individual spend control; if absent, the higher available rolling utilization |
 | GitHub Copilot | Monthly premium request (AI Credit) quota |
 

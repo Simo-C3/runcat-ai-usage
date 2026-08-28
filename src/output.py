@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from config import DEFAULT_DISPLAY_CONFIG, DisplayConfig
-from models import HistoryData, Usage
+from models import HistoryData, MonthlyUsage, Usage
 from storage import atomic_write_json
 
 
@@ -13,12 +13,29 @@ LABELS = {
         "change": "Today / 1h",
         "trend": "{} Trend",
         "unavailable": "Unavailable",
+        "monthly": "Monthly",
+        "disabled": "Disabled",
+        "enabled": "Enabled",
     },
     "ja": {
         "rate": "使用率",
         "change": "今日 / 1時間",
         "trend": "{}推移",
         "unavailable": "取得不可",
+        "monthly": "月次",
+        "disabled": "無効",
+        "enabled": "有効",
+    },
+}
+
+WINDOW_LABELS = {
+    "en": {
+        "five_hour": "5h",
+        "seven_day": "7d",
+    },
+    "ja": {
+        "five_hour": "5時間",
+        "seven_day": "7日",
     },
 }
 
@@ -84,6 +101,28 @@ def rate_value(
     return "{} · {} / {} {}".format(formatted, used, limit, usage.unit).strip()
 
 
+def monthly_value(
+    monthly: MonthlyUsage,
+    config: DisplayConfig = DEFAULT_DISPLAY_CONFIG,
+) -> str:
+    labels = LABELS[config.language]
+    if not monthly.enabled:
+        return labels["disabled"]
+    if monthly.percentage is None:
+        return labels["enabled"]
+    return rate_value(
+        Usage(
+            percentage=monthly.percentage,
+            used_amount=monthly.used_amount,
+            limit_amount=monthly.limit_amount,
+            amount_kind="currency",
+            currency=monthly.currency,
+            decimal_places=monthly.decimal_places,
+        ),
+        config,
+    )
+
+
 def change_value(history: HistoryData, usage: Usage) -> str:
     if usage.amount_kind == "currency":
         today = currency_value(history.today, usage.currency, usage.decimal_places)
@@ -145,12 +184,39 @@ def snapshot(
 
     for row in config.rows:
         if row == "rate":
-            metrics.append(
-                {
-                    "title": labels["rate"],
-                    "formattedValue": rate_value(usage, config),
-                }
-            )
+            if usage.windows:
+                metrics.extend(
+                    {
+                        "title": WINDOW_LABELS[config.language].get(
+                            window.key, window.key
+                        ),
+                        "formattedValue": percentage_value(
+                            window.percentage, config.percentage_precision
+                        ),
+                    }
+                    for window in usage.windows
+                )
+                if usage.monthly is not None:
+                    metrics.append(
+                        {
+                            "title": labels["monthly"],
+                            "formattedValue": monthly_value(usage.monthly, config),
+                        }
+                    )
+            elif usage.monthly is not None:
+                metrics.append(
+                    {
+                        "title": labels["monthly"],
+                        "formattedValue": monthly_value(usage.monthly, config),
+                    }
+                )
+            else:
+                metrics.append(
+                    {
+                        "title": labels["rate"],
+                        "formattedValue": rate_value(usage, config),
+                    }
+                )
         elif row == "change" and history is not None:
             metrics.append(
                 {
