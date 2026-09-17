@@ -32,6 +32,7 @@ flowchart LR
 | パス | 責務 |
 | --- | --- |
 | `src/app.py` | CLI解析と1回分の更新処理 |
+| `src/diagnostics.py` | 自動更新の状態診断と復旧手順の案内 |
 | `src/config.py` | 表示設定の検証・永続化 |
 | `src/providers/` | サービス別の認証・取得・レスポンス解析 |
 | `src/cache.py` | API結果のキャッシュ |

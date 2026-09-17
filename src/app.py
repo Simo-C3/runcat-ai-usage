@@ -20,6 +20,7 @@ from config import (
     trend_period_seconds,
 )
 from history import HistoryStore
+from diagnostics import background_diagnostics
 from output import rate_value, write_snapshot
 from runcat_ai_usage import __version__
 from services import services
@@ -77,15 +78,23 @@ def run_once(
         history_store.prune(now - MAX_TREND_PERIOD_SECONDS - 86400)
 
 
-def doctor(home: Path) -> int:
-    failures = 0
-    for service in services(home):
+def doctor(home: Path, output_directory: Optional[Path] = None) -> int:
+    catalog = services(home)
+    failures = background_diagnostics(home, catalog, output_directory)
+    recovery = {
+        "claude-code": "Sign in with Claude Code; allow its Keychain access if prompted.",
+        "codex": "Sign in with Codex again (codex login).",
+        "github-copilot": "Run gh auth status; sign in with gh auth login if needed and check your Copilot entitlement.",
+    }
+    print("\nProvider connections:")
+    for service in catalog:
         try:
             usage = service.fetcher()
             print("OK   {:<15} {}".format(service.title, rate_value(usage)))
         except FETCH_ERRORS as error:
             failures += 1
             print("FAIL {:<15} {}".format(service.title, error))
+            print("     {}".format(recovery.get(service.key, "Check provider credentials and retry.")))
     return 1 if failures else 0
 
 
@@ -148,7 +157,7 @@ def parser(home: Path) -> argparse.ArgumentParser:
     argument_parser.add_argument(
         "--output-dir",
         type=Path,
-        default=default_output_directory(home),
+        default=None,
         help="RunCat JSON output directory",
     )
     argument_parser.add_argument(
@@ -166,7 +175,7 @@ def parser(home: Path) -> argparse.ArgumentParser:
     argument_parser.add_argument(
         "--doctor",
         action="store_true",
-        help="check all provider credentials and APIs",
+        help="check automatic updates and provider connections; show recovery steps",
     )
     argument_parser.add_argument(
         "--version",
@@ -256,10 +265,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if arguments.command == "config":
         return configure(arguments, state_directory)
     if arguments.doctor:
-        return doctor(home)
+        output_directory = arguments.output_dir
+        if output_directory is None and os.environ.get("RUNCAT_AI_USAGE_OUTPUT_DIR"):
+            output_directory = default_output_directory(home)
+        return doctor(home, output_directory.expanduser() if output_directory else None)
     run_once(
         home,
-        arguments.output_dir.expanduser(),
+        (arguments.output_dir or default_output_directory(home)).expanduser(),
         state_directory,
         arguments.refresh_seconds,
         load_display_config(state_directory),

@@ -155,11 +155,23 @@ runcat-ai-usage config reset
 For a manual installation, replace `runcat-ai-usage` in these examples with
 the full monitor app executable path shown below.
 
-Check credentials and provider responses without printing secrets:
+Check automatic updates, credentials, and provider responses without printing secrets:
 
 ```sh
 runcat-ai-usage --doctor
 ```
+
+The doctor checks the installed app and LaunchAgent, whether the agent is loaded
+and enabled with a 60-second schedule, its last exit status, and each JSON file's
+write and successful-fetch timestamps (within three minutes). Waiting between
+runs (`not running`) is normal. Missing, stale, or unavailable data is reported
+as `FAIL`, even when a direct provider connection succeeds. The command exits
+with status 1 if any check fails and prints recovery commands without changing
+the installation or snapshots.
+
+The snapshot directory is read from the installed LaunchAgent. `--output-dir`
+or `RUNCAT_AI_USAGE_OUTPUT_DIR` overrides it. These checks show recent monitor
+activity; they do not verify that RunCat Neo has loaded the files.
 
 For a manual installation:
 
@@ -180,6 +192,14 @@ RUNCAT_AI_USAGE_OUTPUT_DIR="$HOME/MyMetrics" runcat-ai-usage-install
 ```
 
 ## Troubleshooting
+
+Start with `runcat-ai-usage --doctor`. If the background monitor is missing or
+disabled, follow the printed setup command (`runcat-ai-usage-install --no-open`
+for Homebrew, or `./scripts/install.sh --no-open` from a source checkout).
+For a loaded monitor with stale output, follow the printed `launchctl kickstart`
+command and inspect the error log. If restarting does not help, rerun setup.
+After recovery, wait 1–2 minutes and run the doctor again. For provider connection
+failures, follow the sign-in guidance shown for that provider.
 
 Inspect the monitor without exposing credentials:
 
