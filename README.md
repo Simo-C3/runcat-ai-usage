@@ -270,7 +270,9 @@ changes when restoring a backup.
 
 The default pipeline and history storage are local. Configured remote Collector
 exporters receive metrics and their resource attributes. Credentials are read only at
-request time and are never written by this project. Claude cache and history
+request time and are never included in metrics, caches, or history. Agent setup
+backups retain the complete original configuration, including any secrets already
+stored there, with owner-only permissions. Claude cache and history
 are separated per sign-in with an opaque credential fingerprint. See
 [SECURITY.md](SECURITY.md).
 

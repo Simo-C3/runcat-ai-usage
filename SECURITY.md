@@ -6,6 +6,10 @@ The monitor reuses credentials already managed by Claude Code, Codex, and
 GitHub CLI. It does not copy credentials into its state directory, output
 files, or logs.
 
+`agents setup` backs up the complete original agent configuration beside that
+file with mode 0600. Any secrets already stored in that configuration remain in
+the backup. Backups are retained on uninstall, including with `--purge`.
+
 - Claude Code: macOS Keychain item `Claude Code-credentials`
 - Codex: `~/.codex/auth.json`
 - GitHub Copilot: the active `gh` authentication
