@@ -1,6 +1,6 @@
 """RunCat Neo metrics for AI plan usage."""
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 
 def main(argv=None) -> int:
