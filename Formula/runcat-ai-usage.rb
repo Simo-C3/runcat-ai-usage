@@ -4,9 +4,9 @@
 class RuncatAiUsage < Formula
   desc "AI plan usage cards for RunCat Neo"
   homepage "https://github.com/Simo-C3/runcat-ai-usage"
-  url "https://github.com/Simo-C3/runcat-ai-usage/releases/download/v0.4.0/runcat-ai-usage-0.4.0.tar.gz"
-  version "0.4.0"
-  sha256 "5aeef86a487429463026a958e61cb62121fb4219222a072e036e06a31632cb2e"
+  url "https://github.com/Simo-C3/runcat-ai-usage/releases/download/v0.5.0/runcat-ai-usage-0.5.0.tar.gz"
+  version "0.5.0"
+  sha256 "4fb67750bc774b1f8951ce27c00193b664cf389e0904345efb4f8497d34fffa5"
   license "MIT"
 
   depends_on :macos
@@ -57,6 +57,6 @@ class RuncatAiUsage < Formula
   end
 
   test do
-    assert_match "runcat-ai-usage 0.4.0", shell_output("#{bin}/runcat-ai-usage --version")
+    assert_match "runcat-ai-usage 0.5.0", shell_output("#{bin}/runcat-ai-usage --version")
   end
 end
