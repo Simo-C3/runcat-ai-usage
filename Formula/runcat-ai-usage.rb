@@ -37,18 +37,17 @@ class RuncatAiUsage < Formula
     chmod 0755, bin/"runcat-ai-usage-uninstall"
   end
 
-  def post_install
-    system bin/"runcat-ai-usage-install", "--no-open"
-  end
-
   def caveats
     <<~EOS
-      The background monitor was installed and started automatically.
+      Install or update the background monitor from your user session:
+        runcat-ai-usage-install --no-open
+
+      This starts the Collector, RunCat adapter, and automatic quota updates.
 
       Add the JSON files from ~/RunCatMetrics in RunCat Neo:
         Settings > Metrics > Custom Metrics > Add Custom Metrics Source
 
-      To repair or restart the background monitor:
+      To repair or restart the background monitor, run the same command:
         runcat-ai-usage-install
 
       Before uninstalling this Formula, stop the monitor with:

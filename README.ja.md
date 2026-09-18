@@ -18,7 +18,7 @@ OTLP受信アダプターがRunCat用JSONを生成します。最大366日分の
 外部Pythonパッケージは不要で、公式OTel Collectorをチェックサム検証して設置します。
 
 エージェント設定と外部送信先の追加は[OTelの設定](docs/otel.md)を参照してください。
-この構成と設定コマンドはv0.5.0以降で利用できます。
+この構成と設定コマンドはv0.5.1以降で利用できます。
 
 [English](README.md)
 
@@ -48,6 +48,7 @@ Homebrewでインストールする場合、Pythonも自動で管理されます
 brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
 brew trust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew install runcat-ai-usage
+runcat-ai-usage-install --no-open
 ```
 
 `brew trust` ではtap全体ではなく、このFormulaだけを信頼対象にします。
@@ -57,13 +58,14 @@ brew install runcat-ai-usage
 ```sh
 brew update
 brew upgrade runcat-ai-usage
+runcat-ai-usage-install --no-open
 ```
 
-Homebrewが名前付きバックグラウンドアプリのインストールまたは更新、1分間隔の
-残量取得LaunchAgentとCollector・受信アダプターの常駐を設定します。
-初回JSONはOTLP経由で1〜2分以内に生成されます。既存の履歴は維持されます。
-`runcat-ai-usage-install` はセットアップの修復や手動再起動が必要な場合だけ
-実行してください。
+Homebrewのインストール・更新後は、ユーザーのターミナルから
+`runcat-ai-usage-install --no-open` を実行してください。Homebrewのインストール処理は
+一時的なホームに隔離されるため、ユーザー用の常駐設定は別途実行します。
+このコマンドが名前付きアプリ・毎分の残量取得・Collector・受信アダプターを
+まとめて設置・起動します。初回JSONは1〜2分以内に生成され、既存の履歴は維持されます。
 
 ## 手動でインストール
 

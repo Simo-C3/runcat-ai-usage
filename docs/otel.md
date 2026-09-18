@@ -22,8 +22,10 @@ protobufはCollectorが受信・変換するため、独自のprotobuf実装は�
 
 ## インストールと既存環境からの移行
 
-OTel対応はv0.5.0以降で利用できます。Homebrewでは `brew update` と
-`brew upgrade runcat-ai-usage` で更新すると、自動的に新しい構成をセットアップします。
+OTel対応はv0.5.1以降で利用できます。Homebrewでは `brew update` と
+`brew upgrade runcat-ai-usage` で更新した後、ユーザーのターミナルから
+`runcat-ai-usage-install --no-open` を実行して新しい構成をセットアップします。
+Homebrewの隔離されたインストール処理ではユーザー用LaunchAgentを登録しません。
 ソースから導入する場合はリポジトリのディレクトリで実行します。
 
 ```sh
@@ -54,7 +56,7 @@ RUNCAT_AI_USAGE_COLLECTOR=/absolute/path/to/otelcol-contrib ./scripts/install.sh
 ## 各エージェントの公式OTel設定
 
 インストーラーはCollector・RunCat変換・残量の定期取得を自動設定します。
-エージェント側の設定は次のコマンドで適用します（v0.5.0以降）。
+エージェント側の設定は次のコマンドで適用します（v0.5.1以降）。
 ソースから試す場合は `runcat-ai-usage` の代わりに
 `PYTHONPATH=src python3 -m runcat_ai_usage` を使ってください。
 

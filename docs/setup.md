@@ -2,18 +2,21 @@
 
 ## 1. インストール
 
-Homebrewを推奨します。インストール時にバックグラウンドアプリと1分間隔の
-残量取得LaunchAgent、Collector・OTLP受信アダプターが自動設定されます。
+Homebrewを推奨します。導入・更新後にユーザーのターミナルから
+`runcat-ai-usage-install --no-open` を実行すると、バックグラウンドアプリ・毎分の
+残量取得LaunchAgent・Collector・OTLP受信アダプターをまとめて設置・起動します。
+Homebrewのインストール処理は一時的なホームに隔離されるため、自動起動の設定は別途実行します。
 エージェント側は `runcat-ai-usage agents setup all` で設定できます。
 `agents setup all --dry-run` で変更対象、`agents status` で設定状態を確認できます。
 Copilot CLIは生成した `~/.local/bin/runcat-copilot` から起動します。
-OTel対応はv0.5.0以降で利用できます。ソースからの導入・外部送信先の追加は
+OTel対応はv0.5.1以降で利用できます。ソースからの導入・外部送信先の追加は
 [OTel設定](otel.md)を参照してください。
 
 ```sh
 brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
 brew trust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew install runcat-ai-usage
+runcat-ai-usage-install --no-open
 ```
 
 RunCat Neoの **Settings → Metrics → Custom Metrics** で

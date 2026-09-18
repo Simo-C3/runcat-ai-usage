@@ -17,10 +17,12 @@ RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 
 
 class HomebrewInstallationTests(unittest.TestCase):
-    def test_formula_runs_background_setup_in_post_install(self):
+    def test_formula_requires_setup_from_user_session(self):
         content = FORMULA.read_text(encoding="utf-8")
-        self.assertIn("def post_install", content)
-        self.assertIn('system bin/"runcat-ai-usage-install", "--no-open"', content)
+        self.assertNotIn("def post_install", content)
+        self.assertNotIn("post_install_steps", content)
+        self.assertIn("runcat-ai-usage-install --no-open", content)
+        self.assertIn("from your user session", content)
 
         installer = INSTALLER.read_text(encoding="utf-8")
         self.assertIn('if [ "$OPEN_OUTPUT" = true ]', installer)

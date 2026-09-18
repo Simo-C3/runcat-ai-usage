@@ -28,9 +28,9 @@ Configure native agents with `runcat-ai-usage agents setup all` (or select
 `claude`, `codex`, `copilot`, or `vscode`). Preview with `--dry-run` and check with
 `runcat-ai-usage agents status`. Copilot CLI uses the generated
 `~/.local/bin/runcat-copilot` launcher. Restart agents after setup. These OTel
-features are available in v0.5.0 and later.
+features are available in v0.5.1 and later.
 See [OTel setup and routing](docs/otel.md) for agent configuration and external
-OTLP destinations. Versions before 0.5.0 used the previous direct JSON path.
+OTLP destinations. Versions before 0.5.1 used the previous direct JSON path.
 
 [日本語](README.ja.md)
 
@@ -60,6 +60,7 @@ additionally requires `/usr/bin/python3`.
 brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
 brew trust --formula Simo-C3/runcat-ai-usage/runcat-ai-usage
 brew install runcat-ai-usage
+runcat-ai-usage-install --no-open
 ```
 
 The `brew trust` command grants trust to this Formula only, not to every
@@ -70,12 +71,14 @@ To upgrade:
 ```sh
 brew update
 brew upgrade runcat-ai-usage
+runcat-ai-usage-install --no-open
 ```
 
-Homebrew automatically installs or updates the named background app, starts its
-one-minute quota LaunchAgent, plus persistent Collector and receiver agents.
-Initial snapshots arrive through OTLP within 1–2 minutes. Existing history is preserved. Run `runcat-ai-usage-install` only to
-repair or restart this setup manually.
+After each Homebrew install or upgrade, run `runcat-ai-usage-install --no-open`
+from your user session. Homebrew isolates install hooks in a temporary home, so
+background setup runs separately. The setup command installs and starts the
+named app, one-minute quota LaunchAgent, Collector, and receiver. Initial
+snapshots arrive within 1–2 minutes; existing history is preserved.
 
 ## Install manually
 
