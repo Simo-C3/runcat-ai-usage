@@ -1,5 +1,6 @@
 import json
 import os
+import plistlib
 import subprocess
 import sys
 import tempfile
@@ -37,6 +38,9 @@ class HomebrewInstallationTests(unittest.TestCase):
             launchctl.parent.mkdir()
             launchctl.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
             launchctl.chmod(0o755)
+            collector = home / "bin/otelcol-contrib"
+            collector.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            collector.chmod(0o755)
 
             cache_directory = (
                 home / "Library/Application Support/RunCat AI Usage/state/cache"
@@ -63,6 +67,7 @@ class HomebrewInstallationTests(unittest.TestCase):
                 launchctl.parent, environment["PATH"]
             )
             environment["RUNCAT_AI_USAGE_PYTHON"] = sys.executable
+            environment["RUNCAT_AI_USAGE_COLLECTOR"] = str(collector)
             result = subprocess.run(
                 ["sh", str(INSTALLER), "--no-open"],
                 env=environment,
@@ -78,15 +83,38 @@ class HomebrewInstallationTests(unittest.TestCase):
             )
             executable = app / "Contents/MacOS/RunCat AI Usage Monitor"
             self.assertTrue(executable.is_file())
-            output_directory = home / "RunCatMetrics"
-            self.assertEqual(
-                sorted(path.name for path in output_directory.glob("*.json")),
-                [
-                    "claude-code.json",
-                    "codex.json",
-                    "github-copilot.json",
-                ],
-            )
+            agents = home / "Library/LaunchAgents"
+            for suffix in ("", ".collector", ".receiver"):
+                agent = plistlib.loads((agents / ("dev.runcat.ai-usage" + suffix + ".plist")).read_bytes())
+                if suffix:
+                    self.assertTrue(agent["KeepAlive"])
+                    self.assertNotIn("StartInterval", agent)
+                else:
+                    self.assertEqual(agent["StartInterval"], 60)
+                    self.assertEqual(agent["ProgramArguments"][-1], "collect")
+            self.assertTrue((home / "Library/Application Support/RunCat AI Usage/otel/collector.yaml").exists())
+            # Mocked launchd does not run the pipeline; setup must not bypass OTLP.
+            self.assertFalse(list((home / "RunCatMetrics").glob("*.json")))
+
+            # Reinstalling preserves operator routing, credentials and the selected paths.
+            config = home / "Library/Application Support/RunCat AI Usage/otel/collector.yaml"
+            config.write_text(config.read_text() + "\n# operator routing\n")
+            monitor_path = agents / "dev.runcat.ai-usage.plist"
+            monitor = plistlib.loads(monitor_path.read_bytes())
+            monitor["EnvironmentVariables"]["RUNCAT_AI_USAGE_OUTPUT_DIR"] = str(home / "Custom Metrics")
+            monitor_path.write_bytes(plistlib.dumps(monitor))
+            collector_path = agents / "dev.runcat.ai-usage.collector.plist"
+            collector_agent = plistlib.loads(collector_path.read_bytes())
+            collector_agent["EnvironmentVariables"]["RUNCAT_REMOTE_OTLP_ENDPOINT"] = "https://example.invalid"
+            collector_path.write_bytes(plistlib.dumps(collector_agent))
+            again = subprocess.run(["sh", str(INSTALLER), "--no-open"], env=environment,
+                                   capture_output=True, text=True, timeout=60)
+            self.assertEqual(again.returncode, 0, again.stderr)
+            self.assertIn("# operator routing", config.read_text())
+            monitor = plistlib.loads(monitor_path.read_bytes())
+            self.assertEqual(monitor["EnvironmentVariables"]["RUNCAT_AI_USAGE_OUTPUT_DIR"], str(home / "Custom Metrics"))
+            collector_agent = plistlib.loads(collector_path.read_bytes())
+            self.assertEqual(collector_agent["EnvironmentVariables"]["RUNCAT_REMOTE_OTLP_ENDPOINT"], "https://example.invalid")
 
     def test_installer_rejects_unknown_option_before_writes(self):
         with tempfile.TemporaryDirectory() as directory:

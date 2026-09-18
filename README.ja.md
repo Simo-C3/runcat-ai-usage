@@ -13,8 +13,12 @@ Today / 1h: 145 / 12 AIC
 7d Trend:   ▁▂▃▅▆▇█
 ```
 
-1分ごとに値を更新し、ローカルに最大366日分の履歴を保存します。外部Python
-パッケージは不要です。
+1分ごとの残量取得と各エージェントの公式OTel出力をCollectorへ送り、
+OTLP受信アダプターがRunCat用JSONを生成します。最大366日分の履歴を保存します。
+外部Pythonパッケージは不要で、公式OTel Collectorをチェックサム検証して設置します。
+
+エージェント設定と外部送信先の追加は[OTelの設定](docs/otel.md)を参照してください。
+この構成と設定コマンドはv0.5.0以降で利用できます。
 
 [English](README.md)
 
@@ -56,7 +60,8 @@ brew upgrade runcat-ai-usage
 ```
 
 Homebrewが名前付きバックグラウンドアプリのインストールまたは更新、1分間隔の
-LaunchAgentの起動、初回JSON生成まで自動で行います。既存の履歴は維持されます。
+残量取得LaunchAgentとCollector・受信アダプターの常駐を設定します。
+初回JSONはOTLP経由で1〜2分以内に生成されます。既存の履歴は維持されます。
 `runcat-ai-usage-install` はセットアップの修復や手動再起動が必要な場合だけ
 実行してください。
 
@@ -69,7 +74,8 @@ cd runcat-ai-usage
 ```
 
 インストーラーは **RunCat AI Usage Monitor** という名前のバックグラウンド
-アプリと1分間隔のLaunchAgentを作成し、`~/RunCatMetrics` を開きます。
+アプリ、毎分の残量取得、Collector・受信アダプターのLaunchAgentを作成し、
+`~/RunCatMetrics` を開きます。各エージェントのOTel設定は `runcat-ai-usage agents setup all` で適用できます（[詳細](docs/otel.md)）。
 
 RunCat Neoの **Settings → Metrics → Custom Metrics** で
 **Add Custom Metrics Source** を選び、次の3ファイルを追加してください。
@@ -122,7 +128,8 @@ runcat-ai-usage config set \
   --trend-period 1w
 ```
 
-- `--rows`: `rate`、`change`、`trend` を任意の順序で指定
+- `--rows`: `rate`、`change`、`trend`、`remaining`、`tokens`、`cost` を任意の順序で指定
+  初期値は `rate,change,trend,tokens,cost`。トークン・推定費用は受信後に表示します。
 - `--rate-format percentage`: 使用量と上限を隠して利用率のみ表示
 - `--percentage-precision`: 小数点以下の最大桁数を `0`〜`3` で指定
 - `--language`: 項目ラベルを `en` または `ja` に変更
@@ -149,7 +156,8 @@ runcat-ai-usage --doctor
 ```
 
 バックグラウンドアプリとLaunchAgentの設置・登録・有効状態、60秒間隔の設定、
-直近の終了結果、各JSONの書き込みとデータ取得が3分以内かを確認します。
+直近の終了結果、Collector・受信アダプターの稼働、OTLP配送、各JSONの書き込みと
+データ取得が3分以内かを確認します。未使用時のネイティブOTel無通信は異常にしません。
 実行間の待機状態（`not running`）は正常です。APIに接続できても、JSONが未生成、
 古い、または取得不可なら `FAIL` となり、終了コードは1になります。
 
@@ -203,6 +211,11 @@ runcat-ai-usage-uninstall --purge
 ```
 
 RunCat Neoに追加したCustom Metrics Sourceは別途削除してください。
+
+`--purge` でも各エージェントのOTel設定・バックアップ・Copilot用ランチャーは残ります。
+設定の自動解除コマンドはありません。アンインストール前に[設定の復元手順](docs/otel.md)で
+OTel設定を戻し、不要になった `~/.local/bin/runcat-copilot` を削除してください。
+バックアップ後に別の変更を加えた場合は、OTel部分だけ戻してその変更を維持してください。
 
 ## ライセンス
 

@@ -22,6 +22,7 @@ runcat-ai-usage = "runcat_ai_usage:main"
 
 [tool.setuptools]
 py-modules = [
+    "agent_setup",
     "app",
     "cache",
     "config",
@@ -29,6 +30,9 @@ py-modules = [
     "history",
     "models",
     "output",
+    "otlp",
+    "receiver",
+    "telemetry_store",
     "runcat_ai_usage",
     "services",
     "storage",

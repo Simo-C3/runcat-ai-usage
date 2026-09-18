@@ -6,6 +6,8 @@ import re
 import shlex
 import subprocess
 import time
+import json
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Sequence
@@ -33,6 +35,39 @@ def launchctl(*arguments: str) -> str:
         check=True,
     )
     return result.stdout
+
+
+def pipeline_diagnostics(domain: str) -> int:
+    failures = 0
+    for suffix, title, endpoint in (
+        ("collector", "OTel Collector", "http://127.0.0.1:13133/"),
+        ("receiver", "RunCat OTLP receiver", "http://127.0.0.1:4319/health"),
+    ):
+        try:
+            status = launchctl("print", domain + "/" + LABEL + "." + suffix)
+            running = re.search(r"^\s*state = running\s*$", status, re.MULTILINE) is not None
+            failures += report(running, title, "running" if running else "not running")
+        except (OSError, subprocess.SubprocessError):
+            failures += report(False, title, "LaunchAgent missing or inaccessible")
+        try:
+            with urllib.request.urlopen(endpoint, timeout=3) as response:
+                if response.status != 200:
+                    raise ValueError("unhealthy endpoint")
+                body = json.load(response)
+            if not isinstance(body, dict):
+                raise ValueError("invalid health response")
+            failures += report(True, title + " HTTP", "reachable")
+            if suffix == "receiver":
+                received = float(body.get("received_at", 0))
+                recent = -60 <= time.time() - received <= MAX_AGE_SECONDS
+                failures += report(recent, "OTLP delivery", "recent metrics received" if recent else "no recent delivery from Collector")
+                for provider, stamp in body.get("native_last_received", {}).items():
+                    detail = "last sample {:.0f}s ago".format(time.time() - stamp) if stamp else "no samples yet (idle or not configured)"
+                    print("INFO Native {}: {}".format(provider, detail))
+        except (OSError, ValueError, TypeError, AttributeError):
+            failures += report(False, title + " HTTP", "unreachable or unhealthy")
+    print("Native agent telemetry may be idle; plan freshness is checked separately.")
+    return failures
 
 
 def background_diagnostics(
@@ -119,6 +154,13 @@ def background_diagnostics(
             if isinstance(configured_output, str) and configured_output
             else home / "RunCatMetrics"
         )
+    pipeline_failures = pipeline_diagnostics(domain)
+    failures += pipeline_failures
+    installation_failed = installation_failed or bool(pipeline_failures)
+    arguments = agent.get("ProgramArguments", []) if isinstance(agent, dict) else []
+    if not isinstance(arguments, list) or "collect" not in arguments:
+        failures += report(False, "OTLP quota producer", "legacy installation; rerun setup to enable the OTel pipeline")
+        installation_failed = True
     print("Metrics directory: {}".format(output_directory))
     now = time.time()
     for service in catalog:
@@ -174,6 +216,9 @@ def background_diagnostics(
         )
         log_path = home / "Library/Logs/RunCat AI Usage/monitor.error.log"
         print("  Inspect errors: tail -n 50 {}".format(shlex.quote(str(log_path))))
+        for suffix in ("collector", "receiver"):
+            path = log_path.with_name(suffix + ".error.log")
+            print("    tail -n 50 {}".format(shlex.quote(str(path))))
         print(
             "  If macOS disabled the monitor, allow RunCat AI Usage Monitor in "
             "System Settings > General > Login Items."

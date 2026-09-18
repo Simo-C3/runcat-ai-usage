@@ -7,7 +7,9 @@ from unittest import mock
 
 from app import main, metric_rows, non_negative_int, parser, run_once, trend_period
 from config import load_display_config
+from telemetry_store import TelemetryStore
 from history import HistoryStore
+from receiver import render
 from models import Usage
 from services import Service
 
@@ -89,10 +91,14 @@ class AppTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            with mock.patch("app.services", return_value=[service]):
-                run_once(root, root / "output", root / "state", 55)
+            def publish(payload, endpoint):
+                with TelemetryStore(root / "state") as store:
+                    store.ingest(payload, __import__("time").time())
+                render(root, root / "output", root / "state")
+            with mock.patch("app.services", return_value=[service]), mock.patch("app.export_metrics", side_effect=publish):
+                run_once(root, root / "state", 55)
                 active_state_key[0] = "claude-code-license-b"
-                run_once(root, root / "output", root / "state", 55)
+                run_once(root, root / "state", 55)
 
             cache_directory = root / "state" / "cache"
             self.assertTrue((cache_directory / "claude-code-license-a.json").exists())

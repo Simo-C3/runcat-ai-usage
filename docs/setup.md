@@ -3,7 +3,12 @@
 ## 1. インストール
 
 Homebrewを推奨します。インストール時にバックグラウンドアプリと1分間隔の
-LaunchAgentが自動設定されます。
+残量取得LaunchAgent、Collector・OTLP受信アダプターが自動設定されます。
+エージェント側は `runcat-ai-usage agents setup all` で設定できます。
+`agents setup all --dry-run` で変更対象、`agents status` で設定状態を確認できます。
+Copilot CLIは生成した `~/.local/bin/runcat-copilot` から起動します。
+OTel対応はv0.5.0以降で利用できます。ソースからの導入・外部送信先の追加は
+[OTel設定](otel.md)を参照してください。
 
 ```sh
 brew tap Simo-C3/runcat-ai-usage https://github.com/Simo-C3/runcat-ai-usage
@@ -33,7 +38,7 @@ runcat-ai-usage config reset
 
 | 設定 | 初期値 | 指定できる値 |
 | --- | --- | --- |
-| `--rows` | `rate,change,trend` | `rate`、`change`、`trend`の任意の順序 |
+| `--rows` | `rate,change,trend,tokens,cost` | `rate`、`change`、`trend`、`remaining`、`tokens`、`cost`の任意の順序 |
 | `--rate-format` | `full` | `full`、`percentage` |
 | `--percentage-precision` | `1` | `0`〜`3` |
 | `--language` | `en` | `en`、`ja` |
@@ -56,6 +61,7 @@ runcat-ai-usage --doctor
 - バックグラウンドアプリとLaunchAgentの設置、登録、有効状態
 - LaunchAgentに読み込まれた60秒間隔の設定と直近の終了結果
 - 各JSONの書き込み時刻とデータ取得時刻が3分以内か、取得不可になっていないか
+- Collector・受信アダプターの起動とHTTP応答、最近のOTLP配送
 - 各サービスへの直接接続
 
 定期実行の待機中（`not running`）は正常です。接続確認に成功しても、
@@ -101,4 +107,6 @@ RUNCAT_AI_USAGE_OUTPUT_DIR="$HOME/MyMetrics" runcat-ai-usage-install
 | `--state-dir` | `~/Library/Application Support/RunCat AI Usage/state` | 設定・履歴・キャッシュの保存先 |
 | `--refresh-seconds` | `55` | APIを再取得する最短間隔 |
 
-LaunchAgent自体は60秒ごとに起動します。
+残量取得LaunchAgentは60秒ごとに起動します。Collectorと受信アダプターは常駐します。
+引数なし／`collect`はOTLP送信だけを行い、`serve`がJSONを生成します。
+`--otlp-endpoint`は残量送信先の完全なメトリクスURLを指定します。

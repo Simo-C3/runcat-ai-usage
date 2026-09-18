@@ -31,8 +31,22 @@ jobs:
       - name: Check shell scripts
         run: |
           sh -n scripts/install.sh
+          sh -n scripts/install-collector.sh
           sh -n scripts/uninstall.sh
           sh -n scripts/release.sh
+
+  otel:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Test real Collector routing
+        run: |
+          sh scripts/install-collector.sh "$RUNNER_TEMP/otelcol-contrib"
+          RUNCAT_AI_USAGE_STATE_DIR="$RUNNER_TEMP/otel-state" "$RUNNER_TEMP/otelcol-contrib" validate --config otel/collector.yaml
+          PYTHONPATH=src RUNCAT_TEST_COLLECTOR="$RUNNER_TEMP/otelcol-contrib" python -m unittest discover -s tests -p 'test_telemetry.py' -v
 
   homebrew:
     runs-on: macos-latest

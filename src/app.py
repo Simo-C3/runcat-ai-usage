@@ -10,7 +10,6 @@ from cache import CacheResult, FETCH_ERRORS, cached_usage
 from config import (
     DEFAULT_DISPLAY_CONFIG,
     LANGUAGES,
-    MAX_TREND_PERIOD_SECONDS,
     METRIC_ROWS,
     RATE_FORMATS,
     TREND_PERIOD_PRESETS,
@@ -19,63 +18,38 @@ from config import (
     save_display_config,
     trend_period_seconds,
 )
-from history import HistoryStore
 from diagnostics import background_diagnostics
-from output import rate_value, write_snapshot
+from output import rate_value
+from otlp import export_metrics, quota_resource
+from receiver import serve
 from runcat_ai_usage import __version__
 from services import services
+import agent_setup
 
 
-def run_once(
-    home: Path,
-    output_directory: Path,
-    state_directory: Path,
-    refresh_seconds: int,
-    display_config: DisplayConfig = DEFAULT_DISPLAY_CONFIG,
-) -> None:
+def run_once(home: Path, state_directory: Path, refresh_seconds: int, endpoint=None) -> int:
+    """Collect plan quotas and send them through the Collector; never write snapshots."""
     now = time.time()
-    history_requested = any(
-        row in display_config.rows for row in ("change", "trend")
-    )
-    with HistoryStore(state_directory / "history.db") as history_store:
-        for service in services(home):
-            try:
-                state_key = service.state_key()
-                result = cached_usage(
-                    state_directory / "cache" / "{}.json".format(state_key),
-                    service.fetcher,
-                    refresh_seconds,
-                    now,
-                )
-            except FETCH_ERRORS as error:
-                state_key = service.key
-                result = CacheResult(None, None, error)
-            if result.error is not None:
-                print("[{}] {}".format(service.title, result.error), file=sys.stderr)
-            history_store.record(state_key, result.usage, result.fetched_at)
-            history = (
-                history_store.summary(
-                    state_key,
-                    now,
-                    trend_period_seconds(display_config.trend_period),
-                )
-                if (
-                    history_requested
-                    and result.usage is not None
-                    and result.usage.used_amount is not None
-                )
-                else None
+    resources = []
+    for service in services(home):
+        try:
+            state_key = service.state_key()
+            result = cached_usage(
+                state_directory / "cache" / "{}.json".format(state_key),
+                service.fetcher, refresh_seconds, now,
             )
-            write_snapshot(
-                output_directory / service.filename,
-                service.title,
-                service.symbol,
-                result.usage,
-                result.fetched_at,
-                history,
-                display_config,
-            )
-        history_store.prune(now - MAX_TREND_PERIOD_SECONDS - 86400)
+        except FETCH_ERRORS as error:
+            state_key = service.key
+            result = CacheResult(None, None, error)
+        if result.error is not None:
+            print("[{}] {}".format(service.title, result.error), file=sys.stderr)
+        resources.append(quota_resource(service, state_key, result, now))
+    try:
+        export_metrics({"resourceMetrics": resources}, endpoint)
+    except FETCH_ERRORS as error:
+        print("OTLP export failed: {}".format(type(error).__name__), file=sys.stderr)
+        return 1
+    return 0
 
 
 def doctor(home: Path, output_directory: Optional[Path] = None) -> int:
@@ -183,7 +157,15 @@ def parser(home: Path) -> argparse.ArgumentParser:
         version="%(prog)s {}".format(__version__),
     )
 
+    argument_parser.add_argument(
+        "--otlp-endpoint", help="OTLP/HTTP metrics URL (default: localhost:4318/v1/metrics)",
+    )
     commands = argument_parser.add_subparsers(dest="command")
+    agent_setup.add_parser(commands)
+    commands.add_parser("collect", help="send plan quotas to the OTel Collector (default)")
+    receive_parser = commands.add_parser("serve", help="receive Collector OTLP/JSON and write RunCat snapshots")
+    receive_parser.add_argument("--port", type=int, default=4319)
+
     config_parser = commands.add_parser(
         "config",
         help="show or change persistent display settings",
@@ -195,7 +177,7 @@ def parser(home: Path) -> argparse.ArgumentParser:
     set_parser.add_argument(
         "--rows",
         type=metric_rows,
-        help="comma-separated rows in display order: rate,change,trend",
+        help="comma-separated rows: " + ",".join(METRIC_ROWS),
     )
     set_parser.add_argument(
         "--rate-format",
@@ -262,6 +244,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     home = Path.home()
     arguments = parser(home).parse_args(argv)
     state_directory = arguments.state_dir.expanduser()
+    if arguments.command == "agents":
+        return agent_setup.execute(arguments, home)
     if arguments.command == "config":
         return configure(arguments, state_directory)
     if arguments.doctor:
@@ -269,11 +253,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if output_directory is None and os.environ.get("RUNCAT_AI_USAGE_OUTPUT_DIR"):
             output_directory = default_output_directory(home)
         return doctor(home, output_directory.expanduser() if output_directory else None)
-    run_once(
-        home,
-        (arguments.output_dir or default_output_directory(home)).expanduser(),
-        state_directory,
-        arguments.refresh_seconds,
-        load_display_config(state_directory),
-    )
-    return 0
+    if arguments.command == "serve":
+        return serve(home, (arguments.output_dir or default_output_directory(home)).expanduser(),
+                     state_directory, arguments.port)
+    return run_once(home, state_directory, arguments.refresh_seconds, arguments.otlp_endpoint)

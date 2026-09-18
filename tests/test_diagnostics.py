@@ -39,6 +39,7 @@ class DiagnosticsTests(unittest.TestCase):
         self.agent.write_bytes(plistlib.dumps({
             "Label": LABEL,
             "Program": str(self.executable),
+            "ProgramArguments": [str(self.executable), "collect"],
             "StartInterval": 60,
             "RunAtLoad": True,
             "EnvironmentVariables": {"RUNCAT_AI_USAGE_OUTPUT_DIR": str(self.output)},
@@ -51,6 +52,7 @@ class DiagnosticsTests(unittest.TestCase):
         self.launchctl = mock.patch("diagnostics.launchctl", side_effect=self.query).start()
         self.addCleanup(mock.patch.stopall)
         mock.patch("diagnostics.time.time", return_value=NOW).start()
+        mock.patch("diagnostics.pipeline_diagnostics", return_value=0).start()
 
     def query(self, command, target):
         return self.disabled if command == "print-disabled" else self.status

@@ -14,6 +14,7 @@ class RuncatAiUsage < Formula
 
   def install
     libexec.install "scripts", "src"
+    libexec.install "otel" if (buildpath/"otel").directory?
 
     python = formula_opt_bin("python@3.13")/"python3.13"
     (bin/"runcat-ai-usage").write <<~SH

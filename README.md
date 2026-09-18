@@ -18,9 +18,19 @@ Today / 1h: 145 / 12 AIC
 7d Trend:   ▁▂▃▅▆▇█
 ```
 
-The monitor refreshes every minute, writes
+Plan quotas are collected every minute and sent via OTLP to an OpenTelemetry
+Collector. Native agent metrics use the same Collector. A local OTLP adapter writes
 [Custom Metrics JSON](https://github.com/runcat-dev/RunCatNeo/blob/main/docs/CustomMetricsSchema.md),
 and keeps up to 366 days of local usage history. No Python packages are required.
+Setup installs a checksum-verified official OTel Collector binary.
+
+Configure native agents with `runcat-ai-usage agents setup all` (or select
+`claude`, `codex`, `copilot`, or `vscode`). Preview with `--dry-run` and check with
+`runcat-ai-usage agents status`. Copilot CLI uses the generated
+`~/.local/bin/runcat-copilot` launcher. Restart agents after setup. These OTel
+features are available in v0.5.0 and later.
+See [OTel setup and routing](docs/otel.md) for agent configuration and external
+OTLP destinations. Versions before 0.5.0 used the previous direct JSON path.
 
 [日本語](README.ja.md)
 
@@ -63,8 +73,8 @@ brew upgrade runcat-ai-usage
 ```
 
 Homebrew automatically installs or updates the named background app, starts its
-one-minute LaunchAgent, and generates the initial snapshots during install and
-upgrade. Existing history is preserved. Run `runcat-ai-usage-install` only to
+one-minute quota LaunchAgent, plus persistent Collector and receiver agents.
+Initial snapshots arrive through OTLP within 1–2 minutes. Existing history is preserved. Run `runcat-ai-usage-install` only to
 repair or restart this setup manually.
 
 ## Install manually
@@ -79,8 +89,9 @@ The installer:
 
 1. Creates a self-contained **RunCat AI Usage Monitor** app under
    `~/Library/Application Support/RunCat AI Usage/`.
-2. Registers a one-minute LaunchAgent named `dev.runcat.ai-usage`.
-3. Generates snapshots in `~/RunCatMetrics` and opens that directory.
+2. Installs the pinned official Collector and registers the quota, Collector, and
+   receiver LaunchAgents. Existing Collector configuration is preserved.
+3. Generates snapshots through OTLP in `~/RunCatMetrics` and opens that directory.
 4. Migrates history from the earlier `~/.copilot/runcat-usage-history.db`
    installation when present.
 
@@ -136,7 +147,9 @@ runcat-ai-usage config set \
   --trend-period 1w
 ```
 
-- `--rows` accepts `rate`, `change`, and `trend` in any order.
+- `--rows` accepts `rate`, `change`, `trend`, `remaining`, `tokens`, and `cost` in any order.
+  Native tokens and estimated USD cost show today / last-hour totals when received.
+  Defaults are `rate,change,trend,tokens,cost`; existing saved settings are preserved.
 - `--rate-format percentage` hides the absolute used / limit values.
 - `--percentage-precision` accepts `0` through `3`.
 - `--language` accepts `en` or `ja` for metric row labels.
@@ -163,7 +176,8 @@ runcat-ai-usage --doctor
 
 The doctor checks the installed app and LaunchAgent, whether the agent is loaded
 and enabled with a 60-second schedule, its last exit status, and each JSON file's
-write and successful-fetch timestamps (within three minutes). Waiting between
+write and successful-fetch timestamps (within three minutes). It also checks the
+Collector, OTLP receiver, and recent delivery. Native agents may be idle. Waiting between
 runs (`not running`) is normal. Missing, stale, or unavailable data is reported
 as `FAIL`, even when a direct provider connection succeeds. The command exits
 with status 1 if any check fails and prints recovery commands without changing
@@ -246,9 +260,16 @@ runcat-ai-usage-uninstall --purge
 
 Remove the three Custom Metrics sources from RunCat Neo separately.
 
+Even with `--purge`, native agent OTel settings, backups, and the Copilot launcher
+remain. There is no automatic agent-settings removal command yet. Before
+uninstalling, [restore agent settings](docs/otel.md) and remove
+`~/.local/bin/runcat-copilot` if no longer needed. Preserve later configuration
+changes when restoring a backup.
+
 ## Privacy and API stability
 
-All processing and history storage are local. Credentials are read only at
+The default pipeline and history storage are local. Configured remote Collector
+exporters receive metrics and their resource attributes. Credentials are read only at
 request time and are never written by this project. Claude cache and history
 are separated per sign-in with an opaque credential fingerprint. See
 [SECURITY.md](SECURITY.md).

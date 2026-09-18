@@ -1,0 +1,16 @@
+# Merge this example into collector.yaml; keep otlp_http/runcat in the pipeline.
+# Multiple OTLP destinations can be configured with separate exporter names.
+exporters:
+  otlp_http/remote:
+    endpoint: ${env:RUNCAT_REMOTE_OTLP_ENDPOINT}
+    headers:
+      Authorization: ${env:RUNCAT_REMOTE_OTLP_AUTHORIZATION}
+    sending_queue:
+      storage: file_storage
+      queue_size: 1000
+    retry_on_failure:
+      max_elapsed_time: 0s
+service:
+  pipelines:
+    metrics:
+      exporters: [otlp_http/runcat, otlp_http/remote]

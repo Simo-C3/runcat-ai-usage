@@ -33,6 +33,7 @@ jobs:
         run: |
           PYTHONPATH=src python -m unittest discover -s tests -v
           sh -n scripts/install.sh
+          sh -n scripts/install-collector.sh
           sh -n scripts/uninstall.sh
           brew style Formula/runcat-ai-usage.rb
 

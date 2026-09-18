@@ -1,0 +1,4 @@
+# Merge into the existing [otel] table in ~/.codex/config.toml; do not duplicate it.
+[otel]
+metrics_exporter = { otlp-http = { endpoint = "http://127.0.0.1:4318/v1/metrics", protocol = "binary" } }
+log_user_prompt = false

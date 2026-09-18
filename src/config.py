@@ -6,7 +6,8 @@ from typing import Any, Dict, Tuple
 from storage import atomic_write_json, read_object
 
 
-METRIC_ROWS = ("rate", "change", "trend")
+METRIC_ROWS = ("rate", "change", "trend", "remaining", "tokens", "cost")
+DEFAULT_ROWS = ("rate", "change", "trend", "tokens", "cost")
 RATE_FORMATS = ("full", "percentage")
 LANGUAGES = ("en", "ja")
 TREND_PERIOD_PRESETS = ("1h", "1d", "1w", "1mo")
@@ -35,7 +36,7 @@ def trend_period_seconds(value: str) -> int:
 
 @dataclass(frozen=True)
 class DisplayConfig:
-    rows: Tuple[str, ...] = METRIC_ROWS
+    rows: Tuple[str, ...] = DEFAULT_ROWS
     rate_format: str = "full"
     percentage_precision: int = 1
     language: str = "en"
@@ -48,7 +49,7 @@ class DisplayConfig:
 
     @classmethod
     def from_dict(cls, value: Dict[str, Any]) -> "DisplayConfig":
-        rows_value = value.get("rows", list(METRIC_ROWS))
+        rows_value = value.get("rows", list(DEFAULT_ROWS))
         if not isinstance(rows_value, list):
             raise ValueError("rows must be a list")
         rows = tuple(str(row) for row in rows_value)
